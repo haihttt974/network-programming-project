@@ -1,8 +1,8 @@
-# DKyThucTap
+# 🎯 DKyThucTap
 
 DKyThucTap is an internship management platform built with ASP.NET Core 9. The system allows candidates to search and apply for internships, while recruiters manage postings and track applications in real time. The project demonstrates modern web development techniques including SignalR real-time communication, layered architecture, and role-based security.
 
-## Features
+## ✨ Features
 - **Authentication & Authorization**
   - Account registration and login using hashed passwords.
   - Role-based access control (candidate, recruiter, admin).
@@ -26,7 +26,7 @@ DKyThucTap is an internship management platform built with ASP.NET Core 9. The s
 - **Extensible Architecture**
   - Services, DTOs, and clear separation of concerns for easy expansion.
 
-## Project Structure
+## 🗂️ Project Structure
 ```
 DKyThucTap/\
 ├── Areas/\
@@ -44,14 +44,14 @@ DKyThucTap/\
 └── DKyThucTap.csproj              # .NET project file
 ````
 
-## Requirements
+## ✅ Requirements
 - [.NET SDK 9.0](https://dotnet.microsoft.com/)
 - SQL Server 2019 or later
 - [EF Core Tools](https://learn.microsoft.com/ef/core/cli/dotnet) for migrations
 - Node.js & npm (optional, for managing front-end assets)
 - An IDE such as Visual Studio 2022 or VS Code
 
-## Getting Started
+## 🚀 Getting Started
 1. **Clone the repository**
    ```bash
    git clone <repo-url>
@@ -81,29 +81,55 @@ DKyThucTap/\
    - Use multiple browser tabs to test real-time notifications and chat.
    - Visit `/Test/Notification` for notification debugging utilities.
 
-## Notes
+## 📌 Notes
 - Replace placeholder connection strings and credentials before deploying.
 - The `doc_noti.md` file contains exhaustive documentation for the notification system.
 - Static files are served from `wwwroot` and can be customized without recompiling.
 - Ensure HTTPS is configured in production environments.
 - Some features assume seeded data (roles, demo users, etc.); adjust as needed.
 
-## License
+## 🔒 License
 Distributed under the MIT License. See `LICENSE` for details.
 
 ## The Dev Team
-- HP – Lead developer & maintainer
+<div align="center">
+	<table>
+		<tr>
+			<td align="center" valign="top">
+					<img src="https://github.com/haihttt974.png?s=150" loading="lazy" width="150" height="150">
+	        <br>
+	        <a href="https://github.com/haihttt974">Duy Hải</a>
+	        <p>
+	        </p>
+			</td>
+			<td align="center" valign="top">
+					<img src="https://github.com/nmdbn.png?s=150" loading="lazy" width="150" height="150">
+	        <br>
+	        <a href="https://github.com/nmdbn">Đại Lâm</a>
+	        <p>
+	        </p>
+			</td>
+      <td align="center" valign="top">
+					<img src="https://github.com/tien190504.png?s=150" loading="lazy" width="150" height="150">
+	        <br>
+	        <a href="https://github.com/tien190504">Đức Tiến</a>
+	        <p>
+	        </p>
+			</td>
+		</tr>
+	</table>
+</div>
 
-## Contributing
+## 🤝 Contributing
 Pull requests are welcome. For major changes, open an issue first to discuss what you would like to change. Please follow the coding conventions described in the project.
 
-## Roadmap
+## 🗺️ Roadmap
 - Email and push notification integrations
 - User notification preferences
 - Mobile-friendly UI improvements
 - Additional analytics and reporting
 
-## Acknowledgements
+## 🫶 Acknowledgements
 - [ASP.NET Core](https://learn.microsoft.com/aspnet/core/)
 - [SignalR](https://learn.microsoft.com/aspnet/core/signalr/)
 - [Bootstrap](https://getbootstrap.com/) for UI components
