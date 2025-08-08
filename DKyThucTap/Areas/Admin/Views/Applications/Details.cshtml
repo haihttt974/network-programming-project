@@ -1,0 +1,718 @@
+﻿@model DKyThucTap.Models.Application
+
+@{
+    ViewData["Title"] = "Chi tiết đơn ứng tuyển";
+    Layout = "~/Views/Shared/_Layout_Admin.cshtml";
+
+    var statusClass = Model.CurrentStatus switch
+    {
+        "applied" => "warning",
+        "under_review" => "info",
+        "interview" => "primary",
+        "approved" or "offered" or "hired" => "success",
+        "rejected" => "danger",
+        _ => "secondary"
+    };
+
+    var statusText = Model.CurrentStatus switch
+    {
+        "applied" => "Đã nộp",
+        "under_review" => "Đang xem xét",
+        "interview" => "Phỏng vấn",
+        "approved" => "Đã duyệt",
+        "offered" => "Đã offer",
+        "hired" => "Đã tuyển",
+        "rejected" => "Từ chối",
+        _ => Model.CurrentStatus
+    };
+}
+
+<!-- Breadcrumb -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0">Chi tiết đơn ứng tuyển</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item">
+                        <a href="@Url.Action("AdminDashboard", "AdminHome", new { area = "Admin" })">Dashboard</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="@Url.Action("Index", "Applications", new { area = "Admin" })">Quản lý đơn ứng tuyển</a>
+                    </li>
+                    <li class="breadcrumb-item active">Chi tiết</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Application Info -->
+        <div class="card card-primary">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-file-alt"></i>
+                    Thông tin đơn ứng tuyển
+                </h3>
+                <div class="card-tools">
+                    <span class="badge badge-@statusClass badge-lg">
+                        @statusText
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary">
+                            <i class="fas fa-briefcase"></i>
+                            Thông tin vị trí
+                        </h6>
+                        <dl class="row">
+                            <dt class="col-sm-5">Vị trí:</dt>
+                            <dd class="col-sm-7">
+                                <strong class="text-primary">@Model.Position?.Title</strong>
+                            </dd>
+
+                            <dt class="col-sm-5">Công ty:</dt>
+                            <dd class="col-sm-7">
+                                @if (Model.Position?.Company != null)
+                                {
+                                    <a href="@Url.Action("Details", "Companies", new { area = "Admin", id = Model.Position.Company.CompanyId })"
+                                       class="text-info">
+                                        <i class="fas fa-building"></i> @Model.Position.Company.Name
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/A</span>
+                                }
+                            </dd>
+
+                            <dt class="col-sm-5">Loại:</dt>
+                            <dd class="col-sm-7">
+                                @if (!string.IsNullOrEmpty(Model.Position?.PositionType))
+                                {
+                                    <span class="badge badge-secondary">@Model.Position.PositionType</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/A</span>
+                                }
+                            </dd>
+
+                            <dt class="col-sm-5">Danh mục:</dt>
+                            <dd class="col-sm-7">
+                                @if (Model.Position?.Category != null)
+                                {
+                                    <span class="badge badge-info">@Model.Position.Category.CategoryName</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Chưa phân loại</span>
+                                }
+                            </dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success">
+                            <i class="fas fa-calendar-alt"></i>
+                            Thông tin ứng tuyển
+                        </h6>
+                        <dl class="row">
+                            <dt class="col-sm-5">Ngày nộp:</dt>
+                            <dd class="col-sm-7">
+                                @if (Model.AppliedAt.HasValue)
+                                {
+                                    <span class="text-info">@Model.AppliedAt.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/A</span>
+                                }
+                            </dd>
+
+                            <dt class="col-sm-5">Trạng thái:</dt>
+                            <dd class="col-sm-7">
+                                <span class="badge badge-@statusClass">@statusText</span>
+                            </dd>
+
+                            <dt class="col-sm-5">Cập nhật cuối:</dt>
+                            <dd class="col-sm-7">
+                                @if (Model.ApplicationStatusHistories?.Any() == true)
+                                {
+                                    var lastUpdate = Model.ApplicationStatusHistories.First();
+                                    <span class="text-info">@lastUpdate.ChangedAt?.ToString("dd/MM/yyyy HH:mm")</span>
+                                    @if (lastUpdate.ChangedByNavigation != null)
+                                    {
+                                        <br>
+                                
+                                        <small class="text-muted">
+                                            Bởi: @(lastUpdate.ChangedByNavigation.UserProfile != null ?
+                                                                                $"{lastUpdate.ChangedByNavigation.UserProfile.FirstName} {lastUpdate.ChangedByNavigation.UserProfile.LastName}" :
+                                                                                lastUpdate.ChangedByNavigation.Email)
+                                </small>
+                                                                }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/A</span>
+                                }
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.CoverLetter))
+                {
+                    <hr>
+                    <div>
+                        <h6 class="font-weight-bold text-gray-800">
+                            <i class="fas fa-envelope"></i>
+                            Thư xin việc:
+                        </h6>
+                        <div class="bg-light p-3 rounded" style="white-space: pre-line;">@Model.CoverLetter</div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.AdditionalInfo))
+                {
+                    <hr>
+                    <div>
+                        <h6 class="font-weight-bold text-gray-800">
+                            <i class="fas fa-info-circle"></i>
+                            Thông tin bổ sung:
+                        </h6>
+                        <div class="bg-light p-3 rounded" style="white-space: pre-line;">@Model.AdditionalInfo</div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Status History -->
+        <div class="card card-info">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-history"></i>
+                    Lịch sử trạng thái
+                </h3>
+            </div>
+            <div class="card-body">
+                @if (Model.ApplicationStatusHistories != null && Model.ApplicationStatusHistories.Any())
+                {
+                    <div class="timeline">
+                        @foreach (var history in Model.ApplicationStatusHistories)
+                        {
+                            var historyStatusClass = history.Status switch
+                            {
+                                "applied" => "warning",
+                                "under_review" => "info",
+                                "interview" => "primary",
+                                "approved" or "offered" or "hired" => "success",
+                                "rejected" => "danger",
+                                _ => "secondary"
+                            };
+
+                            <div class="time-label">
+                                <span class="bg-@historyStatusClass">
+                                    @history.ChangedAt?.ToString("dd/MM/yyyy")
+                                </span>
+                            </div>
+                            <div>
+                                <i class="fas fa-flag bg-@historyStatusClass"></i>
+                                <div class="timeline-item">
+                                    <span class="time">
+                                        <i class="far fa-clock"></i> @history.ChangedAt?.ToString("HH:mm")
+                                    </span>
+                                    <h3 class="timeline-header">
+                                        Trạng thái: <strong>@history.Status</strong>
+                                        @if (history.ChangedByNavigation != null)
+                                        {
+                                            <span class="text-muted">
+                                                bởi @(history.ChangedByNavigation.UserProfile != null ?
+                                                                                    $"{history.ChangedByNavigation.UserProfile.FirstName} {history.ChangedByNavigation.UserProfile.LastName}" :
+                                                                                    history.ChangedByNavigation.Email)
+                                </span>
+                                                                }
+                                    </h3>
+                                    @if (!string.IsNullOrEmpty(history.Notes))
+                                    {
+                                        <div class="timeline-body">
+                                            @history.Notes
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        <div>
+                            <i class="far fa-clock bg-gray"></i>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-3">
+                        <i class="fas fa-history fa-2x text-gray-300 mb-2"></i>
+                        <p class="text-gray-500">Chưa có lịch sử thay đổi trạng thái.</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="card card-warning">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-sticky-note"></i>
+                    Ghi chú nội bộ (@(Model.ApplicantNotes?.Count() ?? 0))
+                </h3>
+            </div>
+            <div class="card-body">
+                @if (Model.ApplicantNotes != null && Model.ApplicantNotes.Any())
+                {
+                    @foreach (var note in Model.ApplicantNotes)
+                    {
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="fas fa-user-circle"></i>
+                                        <strong>
+                                            @if (note.InterviewerUser?.UserProfile != null)
+                                            {
+                                                @($"{note.InterviewerUser.UserProfile.FirstName} {note.InterviewerUser.UserProfile.LastName}")
+                                            }
+                                            else
+                                            {
+                                                @(note.InterviewerUser?.Email ?? "N/A")
+                                            }
+                                        </strong>
+                                    </div>
+                                    <small class="text-muted">
+                                        @note.CreatedAt?.ToString("dd/MM/yyyy HH:mm")
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-0" style="white-space: pre-line;">@note.NoteText</p>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-3">
+                        <i class="fas fa-sticky-note fa-2x text-gray-300 mb-2"></i>
+                        <p class="text-gray-500">Chưa có ghi chú nào.</p>
+                    </div>
+                }
+
+                <!-- Add Note Form -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-plus"></i>
+                            Thêm ghi chú mới
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="@Url.Action("AddNote", "Applications", new { area = "Admin" })">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.ApplicationId" />
+
+                            <div class="form-group">
+                                <label for="noteText">Nội dung ghi chú:</label>
+                                <textarea class="form-control" name="noteText" id="noteText" rows="3"
+                                          placeholder="Nhập ghi chú về ứng viên..." required></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="adminPasswordNote">Mật khẩu admin:</label>
+                                <input type="password" class="form-control" name="adminPassword"
+                                       id="adminPasswordNote" placeholder="Nhập mật khẩu admin" required />
+                            </div>
+
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-save"></i> Thêm ghi chú
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Applicant Info -->
+        <div class="card card-primary">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-user"></i>
+                    Thông tin ứng viên
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    @if (!string.IsNullOrEmpty(Model.User?.UserProfile?.ProfilePictureUrl))
+                    {
+                        <img src="@Model.User.UserProfile.ProfilePictureUrl"
+                             alt="Profile Picture" class="img-fluid rounded-circle mb-3"
+                             style="width: 100px; height: 100px; object-fit: cover;" />
+                    }
+                    else
+                    {
+                        <div class="bg-gray-200 rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                             style="width: 100px; height: 100px;">
+                            <i class="fas fa-user fa-3x text-gray-400"></i>
+                        </div>
+                    }
+
+                    <h5>
+                        @if (Model.User?.UserProfile != null)
+                        {
+                            @($"{Model.User.UserProfile.FirstName} {Model.User.UserProfile.LastName}")
+                        }
+                        else
+                        {
+                            @(Model.User?.Email?.Split('@')[0] ?? "N/A")
+                        }
+                    </h5>
+                    <p class="text-muted">@Model.User?.Role?.RoleName</p>
+                </div>
+
+                <dl class="row">
+                    <dt class="col-sm-4">Email:</dt>
+                    <dd class="col-sm-8">
+                        <a href="mailto:@Model.User?.Email" class="text-primary">@Model.User?.Email</a>
+                    </dd>
+
+                    <dt class="col-sm-4">Điện thoại:</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrEmpty(Model.User?.UserProfile?.Phone))
+                        {
+                            <a href="tel:@Model.User.UserProfile.Phone" class="text-success">@Model.User.UserProfile.Phone</a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Chưa cập nhật</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Địa chỉ:</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrEmpty(Model.User?.UserProfile?.Address))
+                        {
+                            <span>@Model.User.UserProfile.Address</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Chưa cập nhật</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Ngày tạo TK:</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.User?.CreatedAt.HasValue == true)
+                        {
+                            <span class="text-info">@Model.User.CreatedAt.Value.ToString("dd/MM/yyyy")</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">N/A</span>
+                        }
+                    </dd>
+                </dl>
+
+                @if (!string.IsNullOrEmpty(Model.User?.UserProfile?.CvUrl))
+                {
+                    <div class="text-center mt-3">
+                        <a href="@Model.User.UserProfile.CvUrl" target="_blank" class="btn btn-info btn-block">
+                            <i class="fas fa-download"></i> Tải CV
+                        </a>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.User?.UserProfile?.Bio))
+                {
+                    <hr>
+                    <div>
+                        <h6 class="font-weight-bold">Giới thiệu:</h6>
+                        <p class="text-gray-900">@Model.User.UserProfile.Bio</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card card-success">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-bolt"></i>
+                    Thao tác nhanh
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="@Url.Action("Index", "Applications", new { area = "Admin" })"
+                       class="btn btn-secondary btn-block mb-2">
+                        <i class="fas fa-arrow-left"></i>
+                        Quay lại danh sách
+                    </a>
+
+                    <button type="button"
+                            class="btn btn-primary btn-block mb-2"
+                            onclick="showStatusModal(@Model.ApplicationId, '@(Model.User?.Email ?? "N/A")', '@Model.CurrentStatus')">
+                        <i class="fas fa-edit"></i>
+                        Cập nhật trạng thái
+                    </button>
+
+                    <a href="@Url.Action("Details", "Positions", new { area = "Admin", id = Model.PositionId })"
+                       class="btn btn-info btn-block mb-2">
+                        <i class="fas fa-briefcase"></i>
+                        Xem chi tiết vị trí
+                    </a>
+
+                    <button type="button"
+                            class="btn btn-danger btn-block"
+                            onclick="showDeleteModal(@Model.ApplicationId, '@(Model.User?.Email ?? "N/A")', '@(Model.Position?.Title ?? "N/A")')">
+                        <i class="fas fa-trash"></i>
+                        Xóa đơn ứng tuyển
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Position Skills Match -->
+        @if (Model.Position?.PositionSkills != null && Model.Position.PositionSkills.Any())
+        {
+            <div class="card card-info">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-tools"></i>
+                        Kỹ năng yêu cầu
+                    </h3>
+                </div>
+                <div class="card-body">
+                    @foreach (var skill in Model.Position.PositionSkills)
+                    {
+                        <span class="badge badge-@(skill.IsRequired == true ? "danger" : "secondary") mb-1">
+                            @skill.Skill?.Name
+                            @if (skill.IsRequired == true)
+                            {
+                                <i class="fas fa-star" title="Bắt buộc"></i>
+                            }
+                        </span>
+                    }
+                    <hr>
+                    <small class="text-muted">
+                        <i class="fas fa-star text-danger"></i> Kỹ năng bắt buộc |
+                        <i class="fas fa-circle text-secondary"></i> Kỹ năng ưu tiên
+                    </small>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Include modals from index page -->
+<!-- Modal cập nhật trạng thái -->
+<div class="modal fade" id="statusModal" tabindex="-1" role="dialog" aria-labelledby="statusModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form id="statusForm" method="post" action="@Url.Action("UpdateStatus", "Applications", new { area = "Admin" })">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="applicationIdForStatus" />
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="statusModalLabel">
+                        <i class="fas fa-edit text-primary"></i>
+                        Cập nhật trạng thái đơn ứng tuyển
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Đóng">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Đơn ứng tuyển của: <strong id="statusApplicantEmail"></strong>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newStatus">
+                            <i class="fas fa-flag"></i>
+                            Trạng thái mới: <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-control" name="newStatus" id="newStatus" required>
+                            <option value="">-- Chọn trạng thái --</option>
+                            <option value="applied">Đã nộp</option>
+                            <option value="under_review">Đang xem xét</option>
+                            <option value="interview">Phỏng vấn</option>
+                            <option value="approved">Đã duyệt</option>
+                            <option value="offered">Đã offer</option>
+                            <option value="hired">Đã tuyển</option>
+                            <option value="rejected">Từ chối</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="statusNotes">
+                            <i class="fas fa-clipboard-list"></i>
+                            Ghi chú (tùy chọn):
+                        </label>
+                        <textarea class="form-control"
+                                  name="notes"
+                                  id="statusNotes"
+                                  rows="3"
+                                  placeholder="Nhập ghi chú về việc thay đổi trạng thái..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="adminPasswordStatus">
+                            <i class="fas fa-key"></i>
+                            Mật khẩu admin: <span class="text-danger">*</span>
+                        </label>
+                        <input type="password"
+                               class="form-control"
+                               name="adminPassword"
+                               id="adminPasswordStatus"
+                               placeholder="Nhập mật khẩu admin"
+                               required />
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Hủy
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Cập nhật
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal xác nhận xóa -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form id="deleteForm" method="post" action="@Url.Action("Delete", "Applications", new { area = "Admin" })">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="applicationIdForDelete" />
+
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteModalLabel">
+                        <i class="fas fa-trash"></i>
+                        Xác nhận xóa đơn ứng tuyển
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Đóng">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Cảnh báo:</strong> <span id="deleteConfirmText"></span>
+                        <br><small>Hành động này không thể hoàn tác!</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="deleteReason">
+                            <i class="fas fa-clipboard-list"></i>
+                            Lý do xóa: <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control"
+                                  name="reason"
+                                  id="deleteReason"
+                                  rows="3"
+                                  placeholder="Nhập lý do xóa đơn ứng tuyển..."
+                                  required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="adminPasswordDelete">
+                            <i class="fas fa-key"></i>
+                            Mật khẩu admin: <span class="text-danger">*</span>
+                        </label>
+                        <input type="password"
+                               class="form-control"
+                               name="adminPassword"
+                               id="adminPasswordDelete"
+                               placeholder="Nhập mật khẩu admin"
+                               required />
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Hủy
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Xóa đơn ứng tuyển
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showStatusModal(applicationId, applicantEmail, currentStatus) {
+            $('#applicationIdForStatus').val(applicationId);
+            $('#statusApplicantEmail').text(applicantEmail);
+            $('#newStatus').val(currentStatus);
+            $('#adminPasswordStatus').val('');
+            $('#statusNotes').val('');
+            $('#statusModal').modal('show');
+        }
+
+        function showDeleteModal(applicationId, applicantEmail, positionTitle) {
+            $('#applicationIdForDelete').val(applicationId);
+            $('#adminPasswordDelete').val('');
+            $('#deleteReason').val('');
+            const confirmText = `Bạn sắp xóa vĩnh viễn đơn ứng tuyển của "${applicantEmail}" cho vị trí "${positionTitle}".`;
+            $('#deleteConfirmText').text(confirmText);
+            $('#deleteModal').modal('show');
+        }
+
+        $(document).ready(function() {
+            // Form validation and submission handlers
+            $('#statusForm').on('submit', function(e) {
+                const password = $('#adminPasswordStatus').val().trim();
+                const newStatus = $('#newStatus').val().trim();
+
+                if (!password || !newStatus) {
+                    e.preventDefault();
+                    alert('Vui lòng điền đầy đủ thông tin!');
+                    return false;
+                }
+            });
+
+            $('#deleteForm').on('submit', function(e) {
+                const password = $('#adminPasswordDelete').val().trim();
+                const reason = $('#deleteReason').val().trim();
+
+                if (!password || !reason) {
+                    e.preventDefault();
+                    alert('Vui lòng điền đầy đủ thông tin!');
+                    return false;
+                }
+
+                if (!confirm('Bạn có chắc chắn muốn xóa đơn ứng tuyển này không?')) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+
+            console.log('Application details scripts loaded successfully');
+        });
+    </script>
+}

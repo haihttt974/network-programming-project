@@ -1,0 +1,423 @@
+﻿@model DKyThucTap.Models.User
+
+@{
+    ViewData["Title"] = "Chi tiết người dùng";
+    Layout = "~/Views/Shared/_Layout_Admin.cshtml";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Chi tiết người dùng</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="@Url.Action("AdminDashboard", "AdminHome", new { area = "Admin" })">Dashboard</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="@Url.Action("Index", "Users", new { area = "Admin" })">Quản lý người dùng</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">Chi tiết</li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Thông tin cơ bản -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-user"></i>
+                        Thông tin cơ bản
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-5">Email:</dt>
+                                <dd class="col-sm-7">
+                                    <span class="text-primary">@Model.Email</span>
+                                </dd>
+
+                                <dt class="col-sm-5">Họ tên:</dt>
+                                <dd class="col-sm-7">
+                                    @if (Model.UserProfile != null)
+                                    {
+                                        <strong>@($"{Model.UserProfile.FirstName} {Model.UserProfile.LastName}")</strong>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Chưa cập nhật</span>
+                                    }
+                                </dd>
+
+                                <dt class="col-sm-5">Số điện thoại:</dt>
+                                <dd class="col-sm-7">
+                                    @if (!string.IsNullOrEmpty(Model.UserProfile?.Phone))
+                                    {
+                                        <span>@Model.UserProfile.Phone</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Chưa cập nhật</span>
+                                    }
+                                </dd>
+
+                                <dt class="col-sm-5">Địa chỉ:</dt>
+                                <dd class="col-sm-7">
+                                    @if (!string.IsNullOrEmpty(Model.UserProfile?.Address))
+                                    {
+                                        <span>@Model.UserProfile.Address</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Chưa cập nhật</span>
+                                    }
+                                </dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-5">Vai trò:</dt>
+                                <dd class="col-sm-7">
+                                    @if (!string.IsNullOrEmpty(Model.Role?.RoleName))
+                                    {
+                                        <span class="badge badge-info badge-pill">@Model.Role.RoleName</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-secondary badge-pill">Chưa gán vai trò</span>
+                                    }
+                                </dd>
+
+                                <dt class="col-sm-5">Trạng thái:</dt>
+                                <dd class="col-sm-7">
+                                    @if (Model.IsActive == true)
+                                    {
+                                        <span class="badge badge-success badge-pill">
+                                            <i class="fas fa-check-circle"></i> Hoạt động
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-danger badge-pill">
+                                            <i class="fas fa-lock"></i> Đã khóa
+                                        </span>
+                                    }
+                                </dd>
+
+                                <dt class="col-sm-5">Ngày tạo:</dt>
+                                <dd class="col-sm-7">
+                                    @if (Model.CreatedAt.HasValue)
+                                    {
+                                        <span class="text-info">@Model.CreatedAt.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">N/A</span>
+                                    }
+                                </dd>
+
+                                <dt class="col-sm-5">Đăng nhập cuối:</dt>
+                                <dd class="col-sm-7">
+                                    @if (Model.LastLogin.HasValue)
+                                    {
+                                        <span class="text-success">@Model.LastLogin.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Chưa đăng nhập</span>
+                                    }
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.UserProfile != null && !string.IsNullOrEmpty(Model.UserProfile.Bio))
+            {
+                <!-- Thông tin bổ sung -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="fas fa-info-circle"></i>
+                            Giới thiệu bản thân
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-gray-900">@Model.UserProfile.Bio</p>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Ảnh đại diện -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-image"></i>
+                        Ảnh đại diện
+                    </h6>
+                </div>
+                <div class="card-body text-center">
+                    @if (!string.IsNullOrEmpty(Model.UserProfile?.ProfilePictureUrl))
+                    {
+                        <img src="@Model.UserProfile.ProfilePictureUrl"
+                             alt="Profile Picture"
+                             class="img-fluid rounded-circle mb-3"
+                             style="width: 150px; height: 150px; object-fit: cover;" />
+                    }
+                    else
+                    {
+                        <div class="bg-gray-200 rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                             style="width: 150px; height: 150px;">
+                            <i class="fas fa-user fa-4x text-gray-400"></i>
+                        </div>
+                    }
+                    <p class="text-gray-600 small">
+                        @if (Model.UserProfile?.UpdatedAt.HasValue == true)
+                        {
+                            <span>Cập nhật: @Model.UserProfile.UpdatedAt.Value.ToString("dd/MM/yyyy")</span>
+                        }
+                        else
+                        {
+                            <span>Chưa cập nhật hồ sơ</span>
+                        }
+                    </p>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.UserProfile?.CvUrl))
+            {
+                <!-- CV -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="fas fa-file-alt"></i>
+                            CV/Resume
+                        </h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <a href="@Model.UserProfile.CvUrl"
+                           target="_blank"
+                           class="btn btn-outline-primary btn-block">
+                            <i class="fas fa-download"></i>
+                            Tải xuống CV
+                        </a>
+                    </div>
+                </div>
+            }
+
+            <!-- Thao tác -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-cogs"></i>
+                        Thao tác
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="@Url.Action("Index", "Users", new { area = "Admin" })"
+                           class="btn btn-secondary btn-block mb-2">
+                            <i class="fas fa-arrow-left"></i>
+                            Quay lại danh sách
+                        </a>
+
+                        @{
+                            var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+                        }
+
+                        @if (Model.UserId != currentUserId)
+                        {
+                            <button type="button"
+                                    class="btn @(Model.IsActive == true ? "btn-warning" : "btn-success") btn-block"
+                                    onclick="showToggleModal(@Model.UserId, '@(Model.IsActive == true ? "Khóa" : "Mở khóa")', @Model.IsActive.ToString().ToLower())">
+                                <i class="fas @(Model.IsActive == true ? "fa-lock" : "fa-unlock")"></i>
+                                @(Model.IsActive == true ? "Khóa tài khoản" : "Mở khóa tài khoản")
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-secondary btn-block" disabled>
+                                <i class="fas fa-ban"></i>
+                                Không thể tự khóa tài khoản
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal xác nhận khóa/mở khóa -->
+<div class="modal fade" id="toggleModal" tabindex="-1" role="dialog" aria-labelledby="toggleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form id="toggleForm" method="post" action="@Url.Action("ToggleActive", "Users", new { area = "Admin" })">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="userIdToToggle" />
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="toggleModalLabel">
+                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                        Xác nhận thao tác
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Đóng">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle"></i>
+                        <span id="toggleConfirmText"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="adminPassword">
+                            <i class="fas fa-key"></i>
+                            Nhập mật khẩu admin để xác nhận:
+                        </label>
+                        <input type="password"
+                               class="form-control"
+                               name="adminPassword"
+                               id="adminPassword"
+                               placeholder="Mật khẩu admin"
+                               required />
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Hủy
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="toggleConfirmBtn">
+                        <i class="fas fa-check"></i> Xác nhận
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <style>
+        .card {
+            transition: transform 0.2s;
+        }
+
+            .card:hover {
+                transform: translateY(-2px);
+            }
+
+        .badge {
+            font-size: 0.85em;
+        }
+
+        .modal-header {
+            background-color: #f8f9fc;
+            border-bottom: 1px solid #e3e6f0;
+        }
+
+        .alert-warning {
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+
+        dt {
+            font-weight: 600;
+            color: #5a5c69;
+        }
+
+        dd {
+            margin-bottom: 0.5rem;
+        }
+
+        .breadcrumb {
+            background-color: transparent;
+            padding: 0;
+            margin-bottom: 0;
+        }
+
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: ">";
+            color: #858796;
+        }
+
+        .breadcrumb-item a {
+            color: #5a5c69;
+            text-decoration: none;
+        }
+
+            .breadcrumb-item a:hover {
+                color: #3a3b45;
+                text-decoration: underline;
+            }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        function showToggleModal(userId, actionText, isCurrentlyActive) {
+            console.log('showToggleModal called with:', { userId, actionText, isCurrentlyActive });
+
+            // Set user ID
+            $('#userIdToToggle').val(userId);
+
+            // Clear password field
+            $('#adminPassword').val('');
+
+            // Set confirmation text
+            const confirmText = `Bạn có chắc chắn muốn ${actionText.toLowerCase()} tài khoản này không?`;
+            $('#toggleConfirmText').text(confirmText);
+
+            // Update modal title and button based on action
+            if (isCurrentlyActive) {
+                $('#toggleModalLabel').html('<i class="fas fa-lock text-warning"></i> Xác nhận khóa tài khoản');
+                $('#toggleConfirmBtn').removeClass('btn-success').addClass('btn-warning')
+                    .html('<i class="fas fa-lock"></i> Khóa tài khoản');
+            } else {
+                $('#toggleModalLabel').html('<i class="fas fa-unlock text-success"></i> Xác nhận mở khóa tài khoản');
+                $('#toggleConfirmBtn').removeClass('btn-warning').addClass('btn-success')
+                    .html('<i class="fas fa-unlock"></i> Mở khóa tài khoản');
+            }
+
+            // Show modal
+            $('#toggleModal').modal('show');
+        }
+
+        $(document).ready(function() {
+            // Handle form submission
+            $('#toggleForm').on('submit', function(e) {
+                const password = $('#adminPassword').val().trim();
+                if (!password) {
+                    e.preventDefault();
+                    alert('Vui lòng nhập mật khẩu admin!');
+                    $('#adminPassword').focus();
+                    return false;
+                }
+            });
+
+            // Clear modal when hidden
+            $('#toggleModal').on('hidden.bs.modal', function () {
+                $('#adminPassword').val('');
+                $('#userIdToToggle').val('');
+            });
+
+            // Focus on password field when modal is shown
+            $('#toggleModal').on('shown.bs.modal', function () {
+                $('#adminPassword').focus();
+            });
+
+            console.log('Details page scripts loaded successfully');
+        });
+    </script>
+}

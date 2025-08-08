@@ -1,0 +1,506 @@
+﻿@model DKyThucTap.Areas.Admin.Controllers.ApplicationStatisticsViewModel
+
+@{
+    ViewData["Title"] = "Thống kê đơn ứng tuyển";
+    Layout = "~/Views/Shared/_Layout_Admin.cshtml";
+
+    // Helper function to get month name
+    string GetMonthName(int month)
+    {
+        return new DateTime(2020, month, 1).ToString("MMMM", new System.Globalization.CultureInfo("vi-VN"));
+    }
+}
+
+<!-- Breadcrumb -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0">Thống kê đơn ứng tuyển</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item">
+                        <a href="@Url.Action("AdminDashboard", "AdminHome", new { area = "Admin" })">Dashboard</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="@Url.Action("Index", "Applications", new { area = "Admin" })">Quản lý đơn ứng tuyển</a>
+                    </li>
+                    <li class="breadcrumb-item active">Thống kê</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row">
+    <div class="col-lg-3 col-6">
+        <div class="small-box bg-info">
+            <div class="inner">
+                <h3>@Model.TotalApplications</h3>
+                <p>Tổng đơn ứng tuyển</p>
+            </div>
+            <div class="icon">
+                <i class="fas fa-file-alt"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-6">
+        <div class="small-box bg-warning">
+            <div class="inner">
+                <h3>@Model.PendingApplications</h3>
+                <p>Đơn chờ xử lý</p>
+            </div>
+            <div class="icon">
+                <i class="fas fa-clock"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-6">
+        <div class="small-box bg-success">
+            <div class="inner">
+                <h3>@Model.ApprovedApplications</h3>
+                <p>Đơn đã duyệt</p>
+            </div>
+            <div class="icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-6">
+        <div class="small-box bg-danger">
+            <div class="inner">
+                <h3>@Model.RejectedApplications</h3>
+                <p>Đơn từ chối</p>
+            </div>
+            <div class="icon">
+                <i class="fas fa-times-circle"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Applications by Status -->
+    <div class="col-md-6">
+        <div class="card card-primary">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-chart-pie mr-1"></i>
+                    Đơn ứng tuyển theo trạng thái
+                </h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="position: relative; height:300px;">
+                    <canvas id="applicationStatusChart"></canvas>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="row">
+                    @if (Model.ApplicationsByStatus != null && Model.ApplicationsByStatus.Any())
+                    {
+                        @foreach (var status in Model.ApplicationsByStatus)
+                        {
+                            var statusClass = status.Status switch
+                            {
+                                "applied" => "warning",
+                                "under_review" => "info",
+                                "interview" => "primary",
+                                "approved" => "success",
+                                "offered" => "success",
+                                "hired" => "success",
+                                "rejected" => "danger",
+                                _ => "secondary"
+                            };
+
+                            var statusText = status.Status switch
+                            {
+                                "applied" => "Đã nộp",
+                                "under_review" => "Đang xem xét",
+                                "interview" => "Phỏng vấn",
+                                "approved" => "Đã duyệt",
+                                "offered" => "Đã offer",
+                                "hired" => "Đã tuyển",
+                                "rejected" => "Từ chối",
+                                _ => status.Status
+                            };
+
+                            <div class="col-6 col-md-4 mb-2">
+                                <div class="info-box bg-@statusClass bg-gradient-@statusClass">
+                                    <span class="info-box-icon">
+                                        <i class="fas fa-users"></i>
+                                    </span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">@statusText</span>
+                                        <span class="info-box-number">@status.Count</span>
+                                        @if (Model.TotalApplications > 0)
+                                        {
+                                            <div class="progress">
+                                                <div class="progress-bar" style="width: @((status.Count * 100 / Model.TotalApplications).ToString())%"></div>
+                                            </div>
+                                            <span class="progress-description">
+                                                @Math.Round((double)status.Count * 100 / Model.TotalApplications, 1)%
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="col-12 text-center py-3">
+                            <i class="fas fa-chart-pie fa-3x text-gray-300 mb-3"></i>
+                            <p class="text-gray-500">Không có dữ liệu về trạng thái đơn ứng tuyển.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Applications by Month -->
+    <div class="col-md-6">
+        <div class="card card-success">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-chart-line mr-1"></i>
+                    Đơn ứng tuyển theo tháng (6 tháng gần nhất)
+                </h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="position: relative; height:300px;">
+                    <canvas id="applicationMonthlyChart"></canvas>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Tháng</th>
+                                <th>Số lượng</th>
+                                <th>Tỷ lệ</th>
+                                <th>Thay đổi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.ApplicationsByMonth != null && Model.ApplicationsByMonth.Any())
+                            {
+                                var previousCount = 0;
+                                var firstEntry = true;
+                                var totalMonthlyApplications = Model.ApplicationsByMonth.Sum(m => m.Count);
+
+                                @foreach (var monthData in Model.ApplicationsByMonth.OrderByDescending(m => m.Year).ThenByDescending(m => m.Month))
+                                {
+                                    var monthName = GetMonthName(monthData.Month);
+                                    var percentage = totalMonthlyApplications > 0 ? (double)monthData.Count * 100 / totalMonthlyApplications : 0;
+
+                                    <tr>
+                                        <td>@monthName @monthData.Year</td>
+                                        <td>@monthData.Count</td>
+                                        <td>@Math.Round(percentage, 1)%</td>
+                                        <td>
+                                            @if (!firstEntry)
+                                            {
+                                                var change = previousCount > 0 ?
+                                                (double)(monthData.Count - previousCount) * 100 / previousCount :
+                                                double.PositiveInfinity;
+
+                                                if (double.IsInfinity(change))
+                                                {
+                                                    <span class="badge badge-success">
+                                                        <i class="fas fa-arrow-up"></i> Mới
+                                                    </span>
+                                                }
+                                                else if (change > 0)
+                                                {
+                                                    <span class="badge badge-success">
+                                                        <i class="fas fa-arrow-up"></i> @Math.Round(Math.Abs(change), 1)%
+                                                    </span>
+                                                }
+                                                else if (change < 0)
+                                                {
+                                                    <span class="badge badge-danger">
+                                                        <i class="fas fa-arrow-down"></i> @Math.Round(Math.Abs(change), 1)%
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge badge-secondary">
+                                                        <i class="fas fa-minus"></i> 0%
+                                                    </span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-info">
+                                                    <i class="fas fa-clock"></i> Gần nhất
+                                                </span>
+                                            }
+                                        </td>
+                                    </tr>
+
+                                    previousCount = monthData.Count;
+                                    firstEntry = false;
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-center py-3">
+                                        <i class="fas fa-chart-line text-gray-300"></i>
+                                        <span class="text-gray-500">Không có dữ liệu theo tháng.</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Positions -->
+<div class="card card-info">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-trophy mr-1"></i>
+            Top vị trí có nhiều đơn ứng tuyển nhất
+        </h3>
+        <div class="card-tools">
+            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                <i class="fas fa-minus"></i>
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        @if (Model.TopPositionsByApplications != null && Model.TopPositionsByApplications.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Vị trí</th>
+                            <th>Công ty</th>
+                            <th>Tổng đơn</th>
+                            <th>Đã duyệt</th>
+                            <th>Chờ xử lý</th>
+                            <th>Tỷ lệ duyệt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < Model.TopPositionsByApplications.Count; i++)
+                        {
+                            var position = Model.TopPositionsByApplications[i];
+                            var approvalRate = position.ApplicationCount > 0 ?
+                            (double)position.ApprovedCount * 100 / position.ApplicationCount : 0;
+
+                            <tr>
+                                <td>@(i + 1)</td>
+                                <td>
+                                    <strong class="text-primary">@position.PositionTitle</strong>
+                                </td>
+                                <td>@position.CompanyName</td>
+                                <td>
+                                    <span class="badge badge-info">@position.ApplicationCount</span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-success">@position.ApprovedCount</span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-warning">@position.PendingCount</span>
+                                </td>
+                                <td>
+                                    <div class="progress progress-sm">
+                                        <div class="progress-bar bg-success" style="width: @approvalRate%"></div>
+                                    </div>
+                                    <small>
+                                        @Math.Round(approvalRate, 1)%
+                                    </small>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <i class="fas fa-trophy fa-3x text-gray-300 mb-3"></i>
+                <p class="text-gray-500">Không có dữ liệu về vị trí ứng tuyển.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            'use strict'
+
+            // Applications by Status Chart
+            var statusCtx = document.getElementById('applicationStatusChart').getContext('2d');
+            var statusLabels = [];
+            var statusData = [];
+            var statusColors = [];
+
+            @if (Model.ApplicationsByStatus != null && Model.ApplicationsByStatus.Any())
+            {
+                    foreach (var status in Model.ApplicationsByStatus)
+                    {
+                            var statusText = status.Status switch
+                            {
+                                    "applied" => "Đã nộp",
+                                    "under_review" => "Đang xem xét",
+                                    "interview" => "Phỏng vấn",
+                                    "approved" => "Đã duyệt",
+                                    "offered" => "Đã offer",
+                                    "hired" => "Đã tuyển",
+                                    "rejected" => "Từ chối",
+                                    _ => status.Status
+                            };
+
+                            var color = status.Status switch
+                            {
+                                    "applied" => "#ffc107", // warning
+                                    "under_review" => "#17a2b8", // info
+                                    "interview" => "#007bff", // primary
+                                    "approved" => "#28a745", // success
+                                    "offered" => "#20c997", // success variant
+                                    "hired" => "#28a745", // success
+                                    "rejected" => "#dc3545", // danger
+                                    _ => "#6c757d" // secondary
+                            };
+
+                            <text>
+                            statusLabels.push('@statusText');
+                            statusData.push(@status.Count);
+                            statusColors.push('@color');
+                            </text>
+                    }
+            }
+
+            var statusChart = new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: statusLabels,
+                    datasets: [{
+                        data: statusData,
+                        backgroundColor: statusColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            boxWidth: 15,
+                            fontSize: 12
+                        }
+                    },
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true
+                    },
+                    tooltips: {
+                        callbacks: {
+                            label: function(tooltipItem, data) {
+                                var dataset = data.datasets[tooltipItem.datasetIndex];
+                                var meta = dataset._meta[Object.keys(dataset._meta)[0]];
+                                var total = meta.total;
+                                var currentValue = dataset.data[tooltipItem.index];
+                                var percentage = parseFloat((currentValue/total*100).toFixed(1));
+                                return currentValue + ' (' + percentage + '%)';
+                            },
+                            title: function(tooltipItem, data) {
+                                return data.labels[tooltipItem[0].index];
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Applications by Month Chart
+            var monthlyCtx = document.getElementById('applicationMonthlyChart').getContext('2d');
+            var monthlyLabels = [];
+            var monthlyData = [];
+
+            @if (Model.ApplicationsByMonth != null && Model.ApplicationsByMonth.Any())
+            {
+                    foreach (var month in Model.ApplicationsByMonth.OrderBy(m => m.Year).ThenBy(m => m.Month))
+                    {
+                            var monthName = GetMonthName(month.Month);
+                            <text>
+                            monthlyLabels.push('@monthName @month.Year');
+                            monthlyData.push(@month.Count);
+                            </text>
+                    }
+            }
+
+            var monthlyChart = new Chart(monthlyCtx, {
+                type: 'line',
+                data: {
+                    labels: monthlyLabels,
+                    datasets: [{
+                        label: 'Số đơn ứng tuyển',
+                        data: monthlyData,
+                        backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                        borderColor: 'rgba(40, 167, 69, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(40, 167, 69, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(40, 167, 69, 1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true,
+                                callback: function(value) {
+                                    if (Math.floor(value) === value) {
+                                        return value;
+                                    }
+                                }
+                            }
+                        }]
+                    },
+                    tooltips: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    hover: {
+                        mode: 'nearest',
+                        intersect: true
+                    },
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                }
+            });
+        });
+    </script>
+}

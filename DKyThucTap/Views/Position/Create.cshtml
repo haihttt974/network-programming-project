@@ -1,0 +1,328 @@
+@model DKyThucTap.Models.DTOs.Position.CreatePositionDto
+@{
+    ViewData["Title"] = "Tạo vị trí tuyển dụng";
+    var companies = ViewBag.Companies as List<DKyThucTap.Models.Company> ?? new List<DKyThucTap.Models.Company>();
+    var categories = ViewBag.Categories as List<DKyThucTap.Models.JobCategory> ?? new List<DKyThucTap.Models.JobCategory>();
+    var skills = ViewBag.Skills as List<DKyThucTap.Models.Skill> ?? new List<DKyThucTap.Models.Skill>();
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-plus me-2"></i>
+                        Tạo vị trí tuyển dụng mới
+                    </h3>
+                    <div class="card-tools">
+                        <a href="@Url.Action("My", "Position")" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-arrow-left me-1"></i>
+                            Quay lại
+                        </a>
+                    </div>
+                </div>
+
+                <form asp-action="Create" method="post" class="needs-validation" novalidate>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Left Column -->
+                            <div class="col-md-8">
+                                <!-- Basic Information -->
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Thông tin cơ bản</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="CompanyId" class="form-label">Công ty <span class="text-danger">*</span></label>
+                                                <select asp-for="CompanyId" class="form-select" required>
+                                                    <option value="">-- Chọn công ty --</option>
+                                                    @foreach (var company in companies)
+                                                    {
+                                                        <option value="@company.CompanyId">@company.Name</option>
+                                                    }
+                                                </select>
+                                                <span asp-validation-for="CompanyId" class="text-danger"></span>
+                                                <div class="form-text">
+                                                    @if (!companies.Any())
+                                                    {
+                                                        <span class="text-warning">Bạn chưa tham gia công ty nào.
+                                                        <a href="@Url.Action("Create", "Company")" class="text-decoration-none">Tạo công ty mới</a> hoặc
+                                                        <a href="@Url.Action("Index", "Company")" class="text-decoration-none">tham gia công ty hiện có</a>.</span>
+                                                    }
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="CategoryId" class="form-label">Danh mục</label>
+                                                <select asp-for="CategoryId" class="form-select">
+                                                    <option value="">-- Chọn danh mục --</option>
+                                                    @foreach (var category in categories)
+                                                    {
+                                                        <option value="@category.CategoryId">@category.CategoryName</option>
+                                                    }
+                                                </select>
+                                                <span asp-validation-for="CategoryId" class="text-danger"></span>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label asp-for="Title" class="form-label">Tiêu đề vị trí <span class="text-danger">*</span></label>
+                                            <input asp-for="Title" class="form-control" placeholder="VD: Senior Frontend Developer" required>
+                                            <span asp-validation-for="Title" class="text-danger"></span>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label asp-for="Description" class="form-label">Mô tả công việc <span class="text-danger">*</span></label>
+                                            <textarea asp-for="Description" class="form-control" rows="8" 
+                                                      placeholder="Mô tả chi tiết về công việc, yêu cầu, quyền lợi..." required></textarea>
+                                            <span asp-validation-for="Description" class="text-danger"></span>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="PositionType" class="form-label">Loại công việc <span class="text-danger">*</span></label>
+                                                <select asp-for="PositionType" class="form-select" required>
+                                                    <option value="">-- Chọn loại --</option>
+                                                    <option value="Thực tập">Thực tập</option>
+                                                    <option value="Part-time">Part-time</option>
+                                                    <option value="Full-time">Full-time</option>
+                                                    <option value="Contract">Contract</option>
+                                                    <option value="Freelance">Freelance</option>
+                                                </select>
+                                                <span asp-validation-for="PositionType" class="text-danger"></span>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="SalaryRange" class="form-label">Mức lương</label>
+                                                <input asp-for="SalaryRange" class="form-control" placeholder="VD: 10-15 triệu VND">
+                                                <span asp-validation-for="SalaryRange" class="text-danger"></span>
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-8 mb-3">
+                                                <label asp-for="Location" class="form-label">Địa điểm làm việc</label>
+                                                <input asp-for="Location" class="form-control" placeholder="VD: Hà Nội, TP.HCM">
+                                                <span asp-validation-for="Location" class="text-danger"></span>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">&nbsp;</label>
+                                                <div class="form-check">
+                                                    <input asp-for="IsRemote" class="form-check-input" type="checkbox">
+                                                    <label asp-for="IsRemote" class="form-check-label">
+                                                        Làm việc từ xa
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label asp-for="ApplicationDeadline" class="form-label">Hạn nộp đơn</label>
+                                            <input asp-for="ApplicationDeadline" type="date" class="form-control" 
+                                                   min="@DateTime.Now.ToString("yyyy-MM-dd")">
+                                            <div class="form-text">Để trống nếu không giới hạn thời gian</div>
+                                            <span asp-validation-for="ApplicationDeadline" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Skills -->
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Kỹ năng yêu cầu</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Chọn kỹ năng</label>
+                                            <div class="row">
+                                                @foreach (var skill in skills.Take(20))
+                                                {
+                                                    <div class="col-md-4 col-sm-6 mb-2">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" 
+                                                                   name="SkillIds" value="@skill.SkillId" 
+                                                                   id="skill_@skill.SkillId">
+                                                            <label class="form-check-label" for="skill_@skill.SkillId">
+                                                                @skill.Name
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                            @if (skills.Count > 20)
+                                            {
+                                                <div class="mt-2">
+                                                    <button type="button" class="btn btn-link btn-sm" onclick="toggleMoreSkills()">
+                                                        <span id="moreSkillsText">Hiển thị thêm (@(skills.Count - 20) kỹ năng)</span>
+                                                    </button>
+                                                </div>
+                                                <div id="moreSkills" style="display: none;">
+                                                    <div class="row">
+                                                        @foreach (var skill in skills.Skip(20))
+                                                        {
+                                                            <div class="col-md-4 col-sm-6 mb-2">
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input" type="checkbox" 
+                                                                           name="SkillIds" value="@skill.SkillId" 
+                                                                           id="skill_@skill.SkillId">
+                                                                    <label class="form-check-label" for="skill_@skill.SkillId">
+                                                                        @skill.Name
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Column -->
+                            <div class="col-md-4">
+                                <!-- Status -->
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Trạng thái</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-check form-switch">
+                                            <input asp-for="IsActive" class="form-check-input" type="checkbox" checked>
+                                            <label asp-for="IsActive" class="form-check-label">
+                                                Kích hoạt ngay sau khi tạo
+                                            </label>
+                                        </div>
+                                        <div class="form-text">
+                                            Vị trí sẽ hiển thị công khai và nhận đơn ứng tuyển
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Preview -->
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Xem trước</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="positionPreview">
+                                            <div class="text-muted text-center py-3">
+                                                Nhập thông tin để xem trước
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-between">
+                            <a href="@Url.Action("My", "Position")" class="btn btn-secondary">
+                                <i class="fas fa-times me-1"></i>
+                                Hủy
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>
+                                Tạo vị trí
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Toggle more skills
+function toggleMoreSkills() {
+    const moreSkills = document.getElementById('moreSkills');
+    const moreSkillsText = document.getElementById('moreSkillsText');
+    
+    if (moreSkills.style.display === 'none') {
+        moreSkills.style.display = 'block';
+        moreSkillsText.textContent = 'Ẩn bớt';
+    } else {
+        moreSkills.style.display = 'none';
+        moreSkillsText.textContent = 'Hiển thị thêm (@(skills.Count - 20) kỹ năng)';
+    }
+}
+
+// Form validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// Live preview
+document.addEventListener('DOMContentLoaded', function() {
+    const titleInput = document.querySelector('input[name="Title"]');
+    const companySelect = document.querySelector('select[name="CompanyId"]');
+    const typeSelect = document.querySelector('select[name="PositionType"]');
+    const locationInput = document.querySelector('input[name="Location"]');
+    const remoteCheck = document.querySelector('input[name="IsRemote"]');
+    const salaryInput = document.querySelector('input[name="SalaryRange"]');
+    const preview = document.getElementById('positionPreview');
+    
+    function updatePreview() {
+        const title = titleInput.value || 'Tiêu đề vị trí';
+        const company = companySelect.options[companySelect.selectedIndex]?.text || 'Công ty';
+        const type = typeSelect.value || 'Loại công việc';
+        const location = locationInput.value || 'Địa điểm';
+        const isRemote = remoteCheck.checked;
+        const salary = salaryInput.value;
+        
+        let html = `
+            <div class="position-preview">
+                <h6 class="mb-2">${title}</h6>
+                <p class="text-muted mb-1">${company}</p>
+                <div class="mb-2">
+                    <span class="badge bg-secondary me-1">${type}</span>
+                    ${isRemote ? '<span class="badge bg-info me-1">Remote</span>' : ''}
+                </div>
+                <div class="text-muted small">
+                    <i class="fas fa-map-marker-alt me-1"></i>${location}
+                </div>
+        `;
+        
+        if (salary) {
+            html += `
+                <div class="text-muted small">
+                    <i class="fas fa-dollar-sign me-1"></i>${salary}
+                </div>
+            `;
+        }
+        
+        html += '</div>';
+        preview.innerHTML = html;
+    }
+    
+    // Add event listeners
+    [titleInput, companySelect, typeSelect, locationInput, remoteCheck, salaryInput].forEach(element => {
+        if (element) {
+            element.addEventListener('input', updatePreview);
+            element.addEventListener('change', updatePreview);
+        }
+    });
+    
+    // Initial preview
+    updatePreview();
+});
+</script>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

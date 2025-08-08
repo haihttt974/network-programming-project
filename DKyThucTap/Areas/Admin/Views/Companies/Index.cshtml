@@ -1,0 +1,569 @@
+﻿@model IEnumerable<DKyThucTap.Models.Company>
+@{
+    ViewData["Title"] = "Quản lý công ty";
+    Layout = "~/Views/Shared/_Layout_Admin.cshtml";
+    var industries = ViewBag.Industries as List<string>;
+    var selectedIndustry = ViewBag.SelectedIndustry as string;
+    var selectedStatus = ViewBag.SelectedStatus as string;
+    var search = ViewBag.Search as string;
+}
+
+<!-- Hiển thị thông báo -->
+@{
+    var errorMessage = TempData["ErrorMessage"] as string;
+    var successMessage = TempData["SuccessMessage"] as string;
+}
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @errorMessage
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @successMessage
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Quản lý công ty</h1>
+        <div class="btn-group">
+            <a href="@Url.Action("ViolationReports", "Companies", new { area = "Admin" })"
+               class="btn btn-warning">
+                <i class="fas fa-exclamation-triangle"></i> Báo cáo vi phạm
+            </a>
+        </div>
+    </div>
+
+    <!-- Form tìm kiếm -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Tìm kiếm công ty</h6>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row">
+                <div class="col-md-3 mb-3">
+                    <input type="text" name="search" value="@search" class="form-control"
+                           placeholder="Tìm theo tên công ty..." />
+                </div>
+                <div class="col-md-2 mb-3">
+                    <select name="industry" class="form-control">
+                        <option value="">-- Tất cả ngành --</option>
+                        @if (industries != null)
+                        {
+                            @foreach (var industry in industries)
+                            {
+                                <option value="@industry" @(industry == selectedIndustry ? "selected" : "")>
+                                    @industry
+                                </option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <select name="status" class="form-control">
+                        <option value="">-- Tất cả trạng thái --</option>
+                        <option value="active" @(selectedStatus == "active" ? "selected" : "")>Hoạt động</option>
+                        <option value="inactive" @(selectedStatus == "inactive" ? "selected" : "")>Không hoạt động</option>
+                    </select>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fas fa-search"></i> Tìm kiếm
+                    </button>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <a href="@Url.Action("Index", "Companies", new { area = "Admin" })"
+                       class="btn btn-secondary btn-block">
+                        <i class="fas fa-redo"></i> Làm mới
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bảng danh sách công ty -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                Danh sách công ty (@Model?.Count() ?? 0)
+            </h6>
+        </div>
+        <div class="card-body">
+            @if (Model != null && Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover" id="companiesTable">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Logo</th>
+                                <th>Tên công ty</th>
+                                <th>Ngành</th>
+                                <th>Địa điểm</th>
+                                <th>Vị trí tuyển dụng</th>
+                                <th>Đánh giá</th>
+                                <th>Trạng thái</th>
+                                <th>Ngày tạo</th>
+                                <th width="250">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var company in Model)
+                            {
+                                var activePositions = company.Positions.Count(p => p.IsActive == true);
+                                var totalPositions = company.Positions.Count();
+                                var averageRating = company.CompanyReviews.Any() ?
+                                company.CompanyReviews.Average(r => r.Rating) : 0;
+                                var totalReviews = company.CompanyReviews.Count();
+                                var isActive = activePositions > 0;
+
+                                <tr class="@(averageRating > 0 && averageRating <= 2 ? "table-warning" : "")">
+                                    <td class="text-center">
+                                        @if (!string.IsNullOrEmpty(company.LogoUrl))
+                                        {
+                                            <img src="@company.LogoUrl" alt="Logo"
+                                                 class="rounded" style="width: 40px; height: 40px; object-fit: cover;" />
+                                        }
+                                        else
+                                        {
+                                            <div class="bg-gray-200 rounded d-inline-flex align-items-center justify-content-center"
+                                                 style="width: 40px; height: 40px;">
+                                                <i class="fas fa-building text-gray-400"></i>
+                                            </div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <strong>@company.Name</strong>
+                                            @if (!string.IsNullOrEmpty(company.Website))
+                                            {
+                                                <br>
+                                    
+                                                <small>
+                                                    <a href="@company.Website" target="_blank" class="text-info">
+                                                        <i class="fas fa-external-link-alt"></i> Website
+                                                    </a>
+                                                </small>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(company.Industry))
+                                        {
+                                            <span class="badge badge-info">@company.Industry</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Chưa xác định</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(company.Location))
+                                        {
+                                            <i class="fas fa-map-marker-alt text-muted"></i> 
+                                            @company.Location
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Chưa cập nhật</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge badge-@(isActive ? "success" : "secondary")">
+                                            @activePositions/@totalPositions
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        @if (totalReviews > 0)
+                                        {
+                                            <div>
+                                                @for (int i = 1; i <= 5; i++)
+                                                {
+                                                    <i class="fas fa-star @(i <= averageRating ? "text-warning" : "text-muted")"></i>
+                                                }
+                                                <br><small class="text-muted">(@totalReviews đánh giá)</small>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Chưa có đánh giá</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (isActive)
+                                        {
+                                            <span class="badge badge-success">
+                                                <i class="fas fa-check-circle"></i> Hoạt động
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-warning">
+                                                <i class="fas fa-pause-circle"></i> Tạm khóa
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @company.CreatedAt?.ToString("dd/MM/yyyy")
+                                    </td>
+                                    <td>
+                                        <div class="btn-group-vertical btn-group-sm w-100">
+                                            <!-- Nút chi tiết -->
+                                            <a href="@Url.Action("Details", "Companies", new { area = "Admin", id = company.CompanyId })"
+                                               class="btn btn-info btn-sm mb-1" title="Xem chi tiết">
+                                                <i class="fas fa-eye"></i> Chi tiết
+                                            </a>
+
+                                            <!-- Nút duyệt/khóa -->
+                                            @if (isActive)
+                                            {
+                                                <button type="button"
+                                                        class="btn btn-warning btn-sm mb-1"
+                                                        onclick="showStatusModal(@company.CompanyId, 'suspend', '@company.Name')"
+                                                        title="Tạm khóa công ty">
+                                                    <i class="fas fa-pause"></i> Tạm khóa
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="button"
+                                                        class="btn btn-success btn-sm mb-1"
+                                                        onclick="showStatusModal(@company.CompanyId, 'approve', '@company.Name')"
+                                                        title="Duyệt công ty">
+                                                    <i class="fas fa-check"></i> Duyệt
+                                                </button>
+                                            }
+
+                                            <!-- Nút xóa (chỉ hiện khi có đánh giá xấu) -->
+                                            @if (averageRating > 0 && averageRating <= 2)
+                                            {
+                                                <button type="button"
+                                                        class="btn btn-danger btn-sm"
+                                                        onclick="showDeleteModal(@company.CompanyId, '@company.Name')"
+                                                        title="Xóa công ty vi phạm">
+                                                    <i class="fas fa-trash"></i> Xóa
+                                                </button>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-4">
+                    <i class="fas fa-building fa-3x text-gray-300 mb-3"></i>
+                    <p class="text-gray-500">Không tìm thấy công ty nào.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Modal xác nhận thay đổi trạng thái -->
+<div class="modal fade" id="statusModal" tabindex="-1" role="dialog" aria-labelledby="statusModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form id="statusForm" method="post" action="@Url.Action("ToggleStatus", "Companies", new { area = "Admin" })">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="companyIdForStatus" />
+                <input type="hidden" name="action" id="statusAction" />
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="statusModalLabel">
+                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                        Xác nhận thao tác
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Đóng">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <span id="statusConfirmText"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="adminPasswordStatus">
+                            <i class="fas fa-key"></i>
+                            Nhập mật khẩu admin để xác nhận:
+                        </label>
+                        <input type="password"
+                               class="form-control"
+                               name="adminPassword"
+                               id="adminPasswordStatus"
+                               placeholder="Mật khẩu admin"
+                               required />
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Hủy
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="statusConfirmBtn">
+                        <i class="fas fa-check"></i> Xác nhận
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal xác nhận xóa -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form id="deleteForm" method="post" action="@Url.Action("Delete", "Companies", new { area = "Admin" })">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="companyIdForDelete" />
+
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteModalLabel">
+                        <i class="fas fa-trash"></i>
+                        Xác nhận xóa công ty
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Đóng">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Cảnh báo:</strong> <span id="deleteConfirmText"></span>
+                        <br><small>Hành động này không thể hoàn tác!</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="deleteReason">
+                            <i class="fas fa-clipboard-list"></i>
+                            Lý do xóa: <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control"
+                                  name="reason"
+                                  id="deleteReason"
+                                  rows="3"
+                                  placeholder="Nhập lý do xóa công ty (ví dụ: vi phạm chính sách, lừa đảo...)"
+                                  required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="adminPasswordDelete">
+                            <i class="fas fa-key"></i>
+                            Mật khẩu admin: <span class="text-danger">*</span>
+                        </label>
+                        <input type="password"
+                               class="form-control"
+                               name="adminPassword"
+                               id="adminPasswordDelete"
+                               placeholder="Nhập mật khẩu admin để xác nhận"
+                               required />
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Hủy
+                    </button>
+                    <button type="submit" class="btn btn-danger" id="deleteConfirmBtn">
+                        <i class="fas fa-trash"></i> Xóa công ty
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <style>
+        .card {
+            transition: transform 0.2s;
+        }
+
+            .card:hover {
+                transform: translateY(-2px);
+            }
+
+        .btn-group-vertical .btn {
+            margin-bottom: 2px;
+        }
+
+            .btn-group-vertical .btn:last-child {
+                margin-bottom: 0;
+            }
+
+        .table th {
+            background-color: #f8f9fc;
+            border-top: none;
+            font-weight: 600;
+        }
+
+        .table-warning {
+            background-color: rgba(255, 193, 7, 0.1);
+        }
+
+        .badge {
+            font-size: 0.75em;
+        }
+
+        .modal-header.bg-danger {
+            border-bottom: 1px solid #dc3545;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        .alert-info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+
+        .fa-star.text-warning {
+            color: #ffc107 !important;
+        }
+
+        .fa-star.text-muted {
+            color: #dee2e6 !important;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        function showStatusModal(companyId, action, companyName) {
+            console.log('showStatusModal called with:', { companyId, action, companyName });
+
+            // Set company ID and action
+            $('#companyIdForStatus').val(companyId);
+            $('#statusAction').val(action);
+
+            // Clear password field
+            $('#adminPasswordStatus').val('');
+
+            // Set confirmation text and button based on action
+            let confirmText, buttonText, buttonClass;
+            if (action === 'approve') {
+                confirmText = `Bạn có chắc chắn muốn duyệt công ty "${companyName}" không? Tất cả vị trí tuyển dụng sẽ được kích hoạt.`;
+                buttonText = '<i class="fas fa-check"></i> Duyệt công ty';
+                buttonClass = 'btn-success';
+                $('#statusModalLabel').html('<i class="fas fa-check text-success"></i> Xác nhận duyệt công ty');
+            } else if (action === 'suspend') {
+                confirmText = `Bạn có chắc chắn muốn tạm khóa công ty "${companyName}" không? Tất cả vị trí tuyển dụng sẽ bị vô hiệu hóa.`;
+                buttonText = '<i class="fas fa-pause"></i> Tạm khóa công ty';
+                buttonClass = 'btn-warning';
+                $('#statusModalLabel').html('<i class="fas fa-pause text-warning"></i> Xác nhận tạm khóa công ty');
+            }
+
+            $('#statusConfirmText').text(confirmText);
+            $('#statusConfirmBtn').removeClass('btn-primary btn-success btn-warning').addClass(buttonClass).html(buttonText);
+
+            // Show modal
+            $('#statusModal').modal('show');
+        }
+
+        function showDeleteModal(companyId, companyName) {
+            console.log('showDeleteModal called with:', { companyId, companyName });
+
+            // Set company ID
+            $('#companyIdForDelete').val(companyId);
+
+            // Clear form fields
+            $('#adminPasswordDelete').val('');
+            $('#deleteReason').val('');
+
+            // Set confirmation text
+            const confirmText = `Bạn sắp xóa vĩnh viễn công ty "${companyName}" và tất cả dữ liệu liên quan.`;
+            $('#deleteConfirmText').text(confirmText);
+
+            // Show modal
+            $('#deleteModal').modal('show');
+        }
+
+        $(document).ready(function() {
+            // Auto dismiss alerts after 5 seconds
+            setTimeout(function() {
+                $('.alert').fadeOut('slow');
+            }, 5000);
+
+            // Handle status form submission
+            $('#statusForm').on('submit', function(e) {
+                const password = $('#adminPasswordStatus').val().trim();
+                if (!password) {
+                    e.preventDefault();
+                    alert('Vui lòng nhập mật khẩu admin!');
+                    $('#adminPasswordStatus').focus();
+                    return false;
+                }
+            });
+
+            // Handle delete form submission
+            $('#deleteForm').on('submit', function(e) {
+                const password = $('#adminPasswordDelete').val().trim();
+                const reason = $('#deleteReason').val().trim();
+
+                if (!password) {
+                    e.preventDefault();
+                    alert('Vui lòng nhập mật khẩu admin!');
+                    $('#adminPasswordDelete').focus();
+                    return false;
+                }
+
+                if (!reason) {
+                    e.preventDefault();
+                    alert('Vui lòng nhập lý do xóa công ty!');
+                    $('#deleteReason').focus();
+                    return false;
+                }
+
+                // Final confirmation
+                if (!confirm('Bạn có thực sự chắc chắn muốn xóa công ty này không? Hành động này không thể hoàn tác!')) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+
+            // Clear modals when hidden
+            $('#statusModal').on('hidden.bs.modal', function () {
+                $('#adminPasswordStatus').val('');
+                $('#companyIdForStatus').val('');
+                $('#statusAction').val('');
+            });
+
+            $('#deleteModal').on('hidden.bs.modal', function () {
+                $('#adminPasswordDelete').val('');
+                $('#deleteReason').val('');
+                $('#companyIdForDelete').val('');
+            });
+
+            // Focus on password field when modals are shown
+            $('#statusModal').on('shown.bs.modal', function () {
+                $('#adminPasswordStatus').focus();
+            });
+
+            $('#deleteModal').on('shown.bs.modal', function () {
+                $('#deleteReason').focus();
+            });
+
+            console.log('Companies management scripts loaded successfully');
+        });
+    </script>
+}

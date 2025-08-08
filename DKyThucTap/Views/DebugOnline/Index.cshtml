@@ -1,0 +1,422 @@
+@{
+    ViewData["Title"] = "Debug Online Users System";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Debug Online Users System</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Test Functions</h5>
+                            
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-primary" onclick="testDatabase()">
+                                    <i class="fas fa-database me-1"></i>Test Database
+                                </button>
+                                <small class="form-text text-muted">Check WebsocketConnection table directly</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-success" onclick="testService()">
+                                    <i class="fas fa-cogs me-1"></i>Test Service
+                                </button>
+                                <small class="form-text text-muted">Test OnlineUserService methods</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-info" onclick="testAPI()">
+                                    <i class="fas fa-globe me-1"></i>Test API Endpoints
+                                </button>
+                                <small class="form-text text-muted">Test /api/OnlineUsers/* endpoints</small>
+                            </div>
+
+                            @if (User.Identity.IsAuthenticated)
+                            {
+                                <div class="mb-3">
+                                    <button type="button" class="btn btn-warning" onclick="testConnect()">
+                                        <i class="fas fa-plug me-1"></i>Test Connect
+                                    </button>
+                                    <small class="form-text text-muted">Add a test connection</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="input-group">
+                                        <input type="text" id="connectionIdInput" class="form-control" placeholder="Connection ID">
+                                        <button type="button" class="btn btn-danger" onclick="testDisconnect()">
+                                            <i class="fas fa-unlink me-1"></i>Test Disconnect
+                                        </button>
+                                    </div>
+                                    <small class="form-text text-muted">Remove a connection by ID</small>
+                                </div>
+                            }
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-secondary" onclick="testCleanup()">
+                                    <i class="fas fa-broom me-1"></i>Test Cleanup
+                                </button>
+                                <small class="form-text text-muted">Run cleanup inactive connections</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-dark" onclick="clearLog()">
+                                    <i class="fas fa-trash me-1"></i>Clear Log
+                                </button>
+                            </div>
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-success" onclick="runFullTest()">
+                                    <i class="fas fa-play me-1"></i>Run Full Test Suite
+                                </button>
+                                <small class="form-text text-muted">Run comprehensive system test</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-info" onclick="runQuickTest()">
+                                    <i class="fas fa-bolt me-1"></i>Quick Test
+                                </button>
+                                <small class="form-text text-muted">Run quick service test</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-warning" onclick="createTestData()">
+                                        <i class="fas fa-plus me-1"></i>Create Test Data
+                                    </button>
+                                    <button type="button" class="btn btn-outline-warning" onclick="clearTestData()">
+                                        <i class="fas fa-trash me-1"></i>Clear Test Data
+                                    </button>
+                                </div>
+                                <small class="form-text text-muted">Manage test connections</small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h5>Debug Log</h5>
+                            <div id="debugLog" class="border p-3" style="height: 500px; overflow-y: auto; background-color: #f8f9fa; font-family: monospace; font-size: 12px;">
+                                <p class="text-muted">Debug output will appear here...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h5>Current Status</h5>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="card bg-primary text-white">
+                                        <div class="card-body text-center">
+                                            <h4 class="mb-0" id="currentOnlineCount">?</h4>
+                                            <p class="mb-0">Online Count</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card bg-info text-white">
+                                        <div class="card-body text-center">
+                                            <h4 class="mb-0" id="currentConnections">?</h4>
+                                            <p class="mb-0">Total Connections</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card bg-success text-white">
+                                        <div class="card-body text-center">
+                                            <h4 class="mb-0" id="authStatus">@(User.Identity.IsAuthenticated ? "Yes" : "No")</h4>
+                                            <p class="mb-0">Authenticated</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card bg-warning text-white">
+                                        <div class="card-body text-center">
+                                            <h4 class="mb-0" id="jsStatus">?</h4>
+                                            <p class="mb-0">JS Manager</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="~/js/test-online-users.js"></script>
+<script>
+function logMessage(message, type = 'info') {
+    const log = document.getElementById('debugLog');
+    const timestamp = new Date().toLocaleTimeString();
+    const entry = document.createElement('div');
+    entry.className = `mb-1 ${type === 'error' ? 'text-danger' : type === 'success' ? 'text-success' : 'text-dark'}`;
+    entry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+    log.appendChild(entry);
+    log.scrollTop = log.scrollHeight;
+}
+
+function clearLog() {
+    document.getElementById('debugLog').innerHTML = '<p class="text-muted">Debug output cleared...</p>';
+}
+
+async function testDatabase() {
+    logMessage('Testing database connection...', 'info');
+    try {
+        const response = await fetch('/Debug/Online/TestDatabase');
+        const data = await response.json();
+
+        if (data.error) {
+            logMessage(`Database Error: ${data.error}`, 'error');
+        } else {
+            const connectionCount = data.TotalConnections || 0;
+            logMessage(`Database OK: Found ${connectionCount} connections`, 'success');
+            if (data.Connections && data.Connections.length > 0) {
+                logMessage(`Sample connection: ${JSON.stringify(data.Connections[0], null, 2)}`, 'info');
+            } else {
+                logMessage('No connections found in database', 'info');
+            }
+            document.getElementById('currentConnections').textContent = connectionCount;
+        }
+    } catch (error) {
+        logMessage(`Database Test Failed: ${error.message}`, 'error');
+    }
+}
+
+async function testService() {
+    logMessage('Testing OnlineUserService...', 'info');
+    try {
+        const response = await fetch('/Debug/Online/TestService');
+        const data = await response.json();
+
+        if (data.error) {
+            logMessage(`Service Error: ${data.error}`, 'error');
+        } else {
+            const onlineCount = data.OnlineCount || 0;
+            logMessage(`Service OK: ${onlineCount} users online`, 'success');
+            if (data.OnlineUsers && data.OnlineUsers.length > 0) {
+                logMessage(`Sample user: ${JSON.stringify(data.OnlineUsers[0], null, 2)}`, 'info');
+            } else {
+                logMessage('No online users found', 'info');
+            }
+            document.getElementById('currentOnlineCount').textContent = onlineCount;
+        }
+    } catch (error) {
+        logMessage(`Service Test Failed: ${error.message}`, 'error');
+    }
+}
+
+async function testAPI() {
+    logMessage('Testing API endpoints...', 'info');
+    try {
+        const response = await fetch('/Debug/Online/TestAPI');
+        const data = await response.json();
+
+        if (data.error) {
+            logMessage(`API Error: ${data.error}`, 'error');
+        } else {
+            if (data.CountEndpoint) {
+                logMessage(`Count API: ${data.CountEndpoint.StatusCode} - ${data.CountEndpoint.Content}`,
+                    data.CountEndpoint.IsSuccess ? 'success' : 'error');
+            } else {
+                logMessage('Count API: No response data', 'error');
+            }
+
+            if (data.ListEndpoint) {
+                logMessage(`List API: ${data.ListEndpoint.StatusCode} - ${data.ListEndpoint.Content}`,
+                    data.ListEndpoint.IsSuccess ? 'success' : 'error');
+            } else {
+                logMessage('List API: No response data', 'error');
+            }
+        }
+    } catch (error) {
+        logMessage(`API Test Failed: ${error.message}`, 'error');
+    }
+}
+
+async function testConnect() {
+    logMessage('Testing connection...', 'info');
+    try {
+        const response = await fetch('/Debug/Online/TestConnect', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+            }
+        });
+        const data = await response.json();
+        
+        if (data.error) {
+            logMessage(`Connect Error: ${data.error}`, 'error');
+        } else {
+            logMessage(`Connect OK: ${data.connectionId}`, 'success');
+            document.getElementById('connectionIdInput').value = data.connectionId;
+        }
+    } catch (error) {
+        logMessage(`Connect Test Failed: ${error.message}`, 'error');
+    }
+}
+
+async function testDisconnect() {
+    const connectionId = document.getElementById('connectionIdInput').value;
+    if (!connectionId) {
+        logMessage('Please enter a connection ID', 'error');
+        return;
+    }
+
+    logMessage(`Testing disconnect for ${connectionId}...`, 'info');
+    try {
+        const response = await fetch('/Debug/Online/TestDisconnect', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(connectionId)
+        });
+        const data = await response.json();
+        
+        if (data.error) {
+            logMessage(`Disconnect Error: ${data.error}`, 'error');
+        } else {
+            logMessage(`Disconnect OK`, 'success');
+            document.getElementById('connectionIdInput').value = '';
+        }
+    } catch (error) {
+        logMessage(`Disconnect Test Failed: ${error.message}`, 'error');
+    }
+}
+
+async function testCleanup() {
+    logMessage('Testing cleanup...', 'info');
+    try {
+        const response = await fetch('/Debug/Online/TestCleanup', {
+            method: 'POST'
+        });
+        const data = await response.json();
+        
+        if (data.error) {
+            logMessage(`Cleanup Error: ${data.error}`, 'error');
+        } else {
+            logMessage(`Cleanup OK`, 'success');
+        }
+    } catch (error) {
+        logMessage(`Cleanup Test Failed: ${error.message}`, 'error');
+    }
+}
+
+// Check if OnlineUserManager exists
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof window.onlineUserManager !== 'undefined') {
+        document.getElementById('jsStatus').textContent = 'Active';
+        document.getElementById('jsStatus').parentElement.className = 'card bg-success text-white';
+        logMessage('OnlineUserManager is active', 'success');
+    } else {
+        document.getElementById('jsStatus').textContent = 'Inactive';
+        document.getElementById('jsStatus').parentElement.className = 'card bg-danger text-white';
+        logMessage('OnlineUserManager is not active', 'error');
+    }
+    
+    // Initial tests
+    testDatabase();
+    testService();
+});
+
+async function runFullTest() {
+    logMessage('Starting full test suite...', 'info');
+
+    try {
+        const report = await window.runOnlineUsersTest();
+
+        logMessage(`Test completed! Score: ${report.summary.score}%`,
+            report.summary.score > 80 ? 'success' : 'error');
+        logMessage(`Results: ${report.summary.success} success, ${report.summary.errors} errors, ${report.summary.warnings} warnings`, 'info');
+
+        // Update status cards
+        document.getElementById('currentOnlineCount').textContent = 'See Log';
+        document.getElementById('currentConnections').textContent = 'See Log';
+
+        // Log detailed results
+        report.details.forEach(detail => {
+            logMessage(detail.message, detail.type);
+        });
+
+    } catch (error) {
+        logMessage(`Test suite failed: ${error.message}`, 'error');
+    }
+}
+
+async function runQuickTest() {
+    logMessage('Running quick test...', 'info');
+
+    try {
+        const response = await fetch('/Test/Online/QuickTest');
+        const data = await response.json();
+
+        if (data.success) {
+            logMessage('Quick test completed successfully!', 'success');
+            data.results.forEach(result => {
+                const type = result.includes('❌') ? 'error' : result.includes('✓') ? 'success' : 'info';
+                logMessage(result, type);
+            });
+        } else {
+            logMessage('Quick test failed', 'error');
+            data.results.forEach(result => logMessage(result, 'error'));
+        }
+    } catch (error) {
+        logMessage(`Quick test failed: ${error.message}`, 'error');
+    }
+}
+
+async function createTestData() {
+    logMessage('Creating test data...', 'info');
+
+    try {
+        const response = await fetch('/Test/Online/CreateTestData');
+        const data = await response.json();
+
+        if (data.success) {
+            logMessage('Test data created successfully!', 'success');
+            data.results.forEach(result => {
+                const type = result.includes('❌') ? 'error' : result.includes('✓') ? 'success' : 'info';
+                logMessage(result, type);
+            });
+
+            // Update status
+            document.getElementById('currentOnlineCount').textContent = data.onlineCount || 0;
+            document.getElementById('currentConnections').textContent = data.users?.length || 0;
+        } else {
+            logMessage(`Failed to create test data: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        logMessage(`Create test data failed: ${error.message}`, 'error');
+    }
+}
+
+async function clearTestData() {
+    logMessage('Clearing test data...', 'info');
+
+    try {
+        const response = await fetch('/Test/Online/ClearTestData');
+        const data = await response.json();
+
+        if (data.success) {
+            logMessage(data.message, 'success');
+            if (data.clearedConnections && data.clearedConnections.length > 0) {
+                logMessage(`Cleared connections: ${data.clearedConnections.join(', ')}`, 'info');
+            }
+        } else {
+            logMessage(`Failed to clear test data: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        logMessage(`Clear test data failed: ${error.message}`, 'error');
+    }
+}
+</script>
+}
+
+@Html.AntiForgeryToken()

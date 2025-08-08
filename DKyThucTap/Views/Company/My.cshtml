@@ -1,0 +1,215 @@
+@model List<DKyThucTap.Models.DTOs.Company.CompanyListDto>
+@{
+    ViewData["Title"] = "Công ty của tôi";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">
+                        <i class="fas fa-building me-2"></i>
+                        Công ty của tôi
+                    </h3>
+                    <div class="btn-group">
+                        <a href="@Url.Action("Index", "Company")" class="btn btn-outline-secondary">
+                            <i class="fas fa-list me-1"></i>
+                            Tất cả công ty
+                        </a>
+                        @if (User.HasClaim("Permission", "create_company"))
+                        {
+                            <a href="@Url.Action("Create", "Company")" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>
+                                Tạo công ty mới
+                            </a>
+                        }
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    @if (Model.Any())
+                    {
+                        <!-- Statistics Cards -->
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <h4 class="mb-0">@Model.Count</h4>
+                                                <p class="mb-0">Tổng công ty</p>
+                                            </div>
+                                            <i class="fas fa-building fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <h4 class="mb-0">@Model.Sum(c => c.PositionCount)</h4>
+                                                <p class="mb-0">Tổng vị trí</p>
+                                            </div>
+                                            <i class="fas fa-briefcase fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-info text-white">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <h4 class="mb-0">@Model.Sum(c => c.ActivePositionCount)</h4>
+                                                <p class="mb-0">Đang tuyển</p>
+                                            </div>
+                                            <i class="fas fa-check-circle fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-warning text-white">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <h4 class="mb-0">@Model.Sum(c => c.TotalApplications)</h4>
+                                                <p class="mb-0">Tổng ứng viên</p>
+                                            </div>
+                                            <i class="fas fa-users fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Companies Table -->
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Công ty</th>
+                                        <th>Ngành nghề</th>
+                                        <th>Địa điểm</th>
+                                        <th>Vị trí</th>
+                                        <th>Đang tuyển</th>
+                                        <th>Ứng viên</th>
+                                        <th>Vai trò</th>
+                                        <th>Ngày tham gia</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var company in Model.OrderByDescending(c => c.JoinedAt))
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    @if (!string.IsNullOrEmpty(company.LogoUrl))
+                                                    {
+                                                        <img src="@company.LogoUrl" alt="@company.Name" 
+                                                             class="me-2" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="me-2" style="width: 40px; height: 40px; background-color: #f8f9fa; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                                            <i class="fas fa-building text-muted"></i>
+                                                        </div>
+                                                    }
+                                                    <div>
+                                                        <strong>
+                                                            <a href="@Url.Action("Details", "Company", new { id = company.CompanyId })" 
+                                                               class="text-decoration-none">
+                                                                @company.Name
+                                                            </a>
+                                                        </strong>
+                                                        @if (!string.IsNullOrEmpty(company.Website))
+                                                        {
+                                                            <br><a href="@company.Website" target="_blank" class="small text-muted">Website</a>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="text-muted">@(company.Industry ?? "N/A")</span>
+                                            </td>
+                                            <td>
+                                                <span class="text-muted">@(company.Location ?? "N/A")</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-primary">@company.PositionCount</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-success">@company.ActivePositionCount</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">@company.TotalApplications</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge @(company.UserRole == "Owner" ? "bg-success" : "bg-primary")">
+                                                    @(company.UserRole == "Owner" ? "Chủ sở hữu" : "Nhân viên")
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="text-muted">
+                                                    @company.JoinedAt?.ToString("dd/MM/yyyy")
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="@Url.Action("Details", "Company", new { id = company.CompanyId })" 
+                                                       class="btn btn-outline-info" title="Xem chi tiết">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    @if (company.UserRole == "Owner")
+                                                    {
+                                                        <a href="@Url.Action("Edit", "Company", new { id = company.CompanyId })" 
+                                                           class="btn btn-outline-primary" title="Chỉnh sửa">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <a href="@Url.Action("Recruiters", "Company", new { id = company.CompanyId })" 
+                                                           class="btn btn-outline-success" title="Quản lý nhân viên">
+                                                            <i class="fas fa-users"></i>
+                                                        </a>
+                                                    }
+                                                    <a href="@Url.Action("Create", "Position", new { companyId = company.CompanyId })" 
+                                                       class="btn btn-outline-warning" title="Tạo vị trí mới">
+                                                        <i class="fas fa-plus"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-building fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">Bạn chưa tham gia công ty nào</h4>
+                            <p class="text-muted">Tạo công ty mới hoặc tham gia vào công ty hiện có</p>
+                            <div class="mt-3">
+                                @if (User.HasClaim("Permission", "create_company"))
+                                {
+                                    <a href="@Url.Action("Create", "Company")" class="btn btn-primary me-2">
+                                        <i class="fas fa-plus me-1"></i>
+                                        Tạo công ty mới
+                                    </a>
+                                }
+                                <a href="@Url.Action("Index", "Company")" class="btn btn-outline-secondary">
+                                    <i class="fas fa-search me-1"></i>
+                                    Tìm công ty
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

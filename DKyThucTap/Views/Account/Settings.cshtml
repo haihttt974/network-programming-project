@@ -1,0 +1,246 @@
+@model DKyThucTap.Models.DTOs.UserProfileDto
+@{
+    ViewData["Title"] = "Cài đặt";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-cog me-2"></i>Cài đặt tài khoản
+                </h4>
+            </div>
+            <div class="card-body">
+                <!-- Account Information Section -->
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">
+                        <i class="fas fa-user me-2"></i>Thông tin tài khoản
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Email:</strong> @Model.Email</p>
+                            <p><strong>Vai trò:</strong> <span class="badge bg-primary">@Model.RoleName</span></p>
+                            <p><strong>Trạng thái:</strong> 
+                                @if (Model.IsActive == true)
+                                {
+                                    <span class="badge bg-success">Hoạt động</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Không hoạt động</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Ngày tham gia:</strong> @Model.CreatedAt?.ToString("dd/MM/yyyy")</p>
+                            <p><strong>Đăng nhập cuối:</strong> @Model.LastLogin?.ToString("dd/MM/yyyy HH:mm")</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Section -->
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">
+                        <i class="fas fa-shield-alt me-2"></i>Bảo mật
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-warning">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-key text-warning me-2"></i>Đổi mật khẩu
+                                    </h6>
+                                    <p class="card-text text-muted">Cập nhật mật khẩu để bảo vệ tài khoản</p>
+                                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                                        <i class="fas fa-edit me-1"></i>Đổi mật khẩu
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-info">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-history text-info me-2"></i>Lịch sử đăng nhập
+                                    </h6>
+                                    <p class="card-text text-muted">Xem lịch sử truy cập tài khoản</p>
+                                    <button class="btn btn-info btn-sm" disabled>
+                                        <i class="fas fa-clock me-1"></i>Sắp có
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Privacy Section -->
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">
+                        <i class="fas fa-user-secret me-2"></i>Quyền riêng tư
+                    </h5>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="profileVisibility" checked>
+                                <label class="form-check-label" for="profileVisibility">
+                                    Cho phép nhà tuyển dụng xem hồ sơ của tôi
+                                </label>
+                            </div>
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
+                                <label class="form-check-label" for="emailNotifications">
+                                    Nhận thông báo qua email
+                                </label>
+                            </div>
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="jobAlerts" checked>
+                                <label class="form-check-label" for="jobAlerts">
+                                    Nhận thông báo việc làm phù hợp
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Danger Zone -->
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2 text-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Vùng nguy hiểm
+                    </h5>
+                    <div class="alert alert-danger">
+                        <h6 class="alert-heading">Xóa tài khoản</h6>
+                        <p class="mb-2">Một khi bạn xóa tài khoản, sẽ không thể khôi phục lại. Hãy chắc chắn về quyết định này.</p>
+                        <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                            <i class="fas fa-trash me-1"></i>Xóa tài khoản
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex justify-content-between">
+                    <a asp-action="Dashboard" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Quay lại Dashboard
+                    </a>
+                    <button type="button" class="btn btn-success" onclick="saveSettings()">
+                        <i class="fas fa-save me-1"></i>Lưu cài đặt
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-key me-2"></i>Đổi mật khẩu
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="changePasswordForm">
+                    <div class="mb-3">
+                        <label for="currentPassword" class="form-label">Mật khẩu hiện tại</label>
+                        <input type="password" class="form-control" id="currentPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">Mật khẩu mới</label>
+                        <input type="password" class="form-control" id="newPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">Xác nhận mật khẩu mới</label>
+                        <input type="password" class="form-control" id="confirmPassword" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-warning" onclick="changePassword()">
+                    <i class="fas fa-save me-1"></i>Đổi mật khẩu
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Account Modal -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Xác nhận xóa tài khoản
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <strong>Cảnh báo!</strong> Hành động này không thể hoàn tác.
+                </div>
+                <p>Bạn có chắc chắn muốn xóa tài khoản? Tất cả dữ liệu của bạn sẽ bị xóa vĩnh viễn.</p>
+                <div class="mb-3">
+                    <label for="confirmDelete" class="form-label">Nhập "XÓA TÀI KHOẢN" để xác nhận:</label>
+                    <input type="text" class="form-control" id="confirmDelete" placeholder="XÓA TÀI KHOẢN">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" onclick="deleteAccount()" disabled id="deleteBtn">
+                    <i class="fas fa-trash me-1"></i>Xóa tài khoản
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function saveSettings() {
+            // This would typically send an AJAX request to save settings
+            alert('Cài đặt đã được lưu!');
+        }
+
+        function changePassword() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                alert('Vui lòng điền đầy đủ thông tin!');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                alert('Mật khẩu mới và xác nhận mật khẩu không khớp!');
+                return;
+            }
+
+            // This would typically send an AJAX request to change password
+            alert('Mật khẩu đã được thay đổi thành công!');
+            document.getElementById('changePasswordModal').querySelector('.btn-close').click();
+        }
+
+        function deleteAccount() {
+            const confirmText = document.getElementById('confirmDelete').value;
+            if (confirmText === 'XÓA TÀI KHOẢN') {
+                // This would typically send an AJAX request to delete account
+                alert('Tài khoản sẽ được xóa. Chức năng này sẽ được phát triển sau.');
+            }
+        }
+
+        // Enable delete button when correct text is entered
+        document.getElementById('confirmDelete').addEventListener('input', function() {
+            const deleteBtn = document.getElementById('deleteBtn');
+            if (this.value === 'XÓA TÀI KHOẢN') {
+                deleteBtn.disabled = false;
+            } else {
+                deleteBtn.disabled = true;
+            }
+        });
+    </script>
+}

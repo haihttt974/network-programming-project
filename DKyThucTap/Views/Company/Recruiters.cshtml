@@ -1,0 +1,658 @@
+@model List<DKyThucTap.Models.DTOs.Company.CompanyRecruiterListDto>
+@{
+    ViewData["Title"] = "Quản lý nhân viên tuyển dụng";
+    var company = ViewBag.Company as DKyThucTap.Models.DTOs.Company.CompanyDetailDto;
+    var pendingRequests = ViewBag.PendingRequests as List<DKyThucTap.Models.DTOs.Company.CompanyRecruiterListDto> ?? new List<DKyThucTap.Models.DTOs.Company.CompanyRecruiterListDto>();
+    var statistics = ViewBag.Statistics as DKyThucTap.Models.DTOs.Company.CompanyRecruiterStatisticsDto ?? new DKyThucTap.Models.DTOs.Company.CompanyRecruiterStatisticsDto();
+}
+
+<!-- Notification Container -->
+<div id="notificationContainer" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="card-title mb-1">
+                            <i class="fas fa-users me-2"></i>
+                            Quản lý nhân viên tuyển dụng
+                        </h3>
+                        @if (company != null)
+                        {
+                            <p class="text-muted mb-0">
+                                Công ty: <strong>@company.Name</strong>
+                            </p>
+                        }
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#inviteRecruiterModal">
+                            <i class="fas fa-user-plus me-1"></i>
+                            Mời nhân viên
+                        </button>
+                        @if (company != null)
+                        {
+                            <a href="@Url.Action("Details", "Company", new { id = company.CompanyId })" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>
+                                Quay lại
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="mb-0">@statistics.TotalRecruiters</h4>
+                                    <p class="mb-0">Tổng nhân viên</p>
+                                </div>
+                                <i class="fas fa-users fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="mb-0">@statistics.ActiveRecruiters</h4>
+                                    <p class="mb-0">Đang hoạt động</p>
+                                </div>
+                                <i class="fas fa-user-check fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="mb-0">@statistics.PendingRequests</h4>
+                                    <p class="mb-0">Chờ phê duyệt</p>
+                                </div>
+                                <i class="fas fa-clock fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="mb-0">@statistics.TotalPositions</h4>
+                                    <p class="mb-0">Tổng vị trí</p>
+                                </div>
+                                <i class="fas fa-briefcase fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Requests -->
+            @if (pendingRequests.Any())
+            {
+                <div class="card mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-clock me-2"></i>
+                            Yêu cầu chờ phê duyệt (@pendingRequests.Count)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Người dùng</th>
+                                        <th>Email</th>
+                                        <th>Loại yêu cầu</th>
+                                        <th>Lời nhắn</th>
+                                        <th>Thời gian</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var request in pendingRequests)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    @if (!string.IsNullOrEmpty(request.UserProfilePicture))
+                                                    {
+                                                        <img src="@request.UserProfilePicture" alt="@request.UserName" 
+                                                             class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="rounded-circle me-2 bg-light d-flex align-items-center justify-content-center" 
+                                                             style="width: 32px; height: 32px;">
+                                                            <i class="fas fa-user text-muted"></i>
+                                                        </div>
+                                                    }
+                                                    <strong>@request.UserName</strong>
+                                                </div>
+                                            </td>
+                                            <td>@request.UserEmail</td>
+                                            <td>
+                                                @if (request.Status == "pending")
+                                                {
+                                                    <span class="badge bg-warning">Yêu cầu tham gia</span>
+                                                }
+                                                else if (request.Status == "invited")
+                                                {
+                                                    <span class="badge bg-info">Được mời</span>
+                                                    @if (!string.IsNullOrEmpty(request.InvitedByName))
+                                                    {
+                                                        <br><small class="text-muted">bởi @request.InvitedByName</small>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">@request.Status</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(request.RequestMessage))
+                                                {
+                                                    <span class="text-truncate" style="max-width: 200px;" title="@request.RequestMessage">
+                                                        @request.RequestMessage
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Không có lời nhắn</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    @request.LastActivity?.ToString("dd/MM/yyyy HH:mm")
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    @if (request.Status == "pending")
+                                                    {
+                                                        <!-- Company owner can approve/reject user requests -->
+                                                        <button type="button" class="btn btn-success"
+                                                                onclick="respondToRequest(@request.CompanyId, @request.UserId, true, '@request.UserName')">
+                                                            <i class="fas fa-check"></i> Phê duyệt
+                                                        </button>
+                                                        <button type="button" class="btn btn-danger"
+                                                                onclick="respondToRequest(@request.CompanyId, @request.UserId, false, '@request.UserName')">
+                                                            <i class="fas fa-times"></i> Từ chối
+                                                        </button>
+                                                    }
+                                                    else if (request.Status == "invited")
+                                                    {
+                                                        <!-- Company owner can only cancel invitations -->
+                                                        <button type="button" class="btn btn-warning"
+                                                                onclick="removeRecruiter(@request.CompanyId, @request.UserId, '@request.UserName')">
+                                                            <i class="fas fa-ban"></i> Hủy lời mời
+                                                        </button>
+                                                        <span class="text-muted small">Chờ phản hồi</span>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Active Recruiters -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-users me-2"></i>
+                        Nhân viên hiện tại (@Model.Count)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Nhân viên</th>
+                                        <th>Email</th>
+                                        <th>Vai trò</th>
+                                        <th>Ngày tham gia</th>
+                                        <th>Vị trí</th>
+                                        <th>Hoạt động gần nhất</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var recruiter in Model.OrderByDescending(r => r.Status == "Owner").ThenBy(r => r.UserName))
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    @if (!string.IsNullOrEmpty(recruiter.UserProfilePicture))
+                                                    {
+                                                        <img src="@recruiter.UserProfilePicture" alt="@recruiter.UserName" 
+                                                             class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="rounded-circle me-2 bg-light d-flex align-items-center justify-content-center" 
+                                                             style="width: 40px; height: 40px;">
+                                                            <i class="fas fa-user text-muted"></i>
+                                                        </div>
+                                                    }
+                                                    <div>
+                                                        <strong>@recruiter.UserName</strong>
+                                                        @if (recruiter.Status == "Owner")
+                                                        {
+                                                            <br><small class="text-muted">Chủ sở hữu</small>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>@recruiter.UserEmail</td>
+                                            <td>
+                                                <span class="badge @(recruiter.Status == "Owner" ? "bg-success" : "bg-primary")">
+                                                    @(recruiter.Status == "Owner" ? "Chủ sở hữu" : "Nhân viên")
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="text-muted">
+                                                    @recruiter.JoinedAt?.ToString("dd/MM/yyyy")
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">@recruiter.PositionCount</span>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    @recruiter.LastActivity?.ToString("dd/MM/yyyy")
+                                                </small>
+                                            </td>
+                                            <td>
+                                                @if (recruiter.Status != "Owner")
+                                                {
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                            onclick="removeRecruiter(@recruiter.CompanyId, @recruiter.UserId, '@recruiter.UserName')">
+                                                        <i class="fas fa-user-minus"></i> Xóa
+                                                    </button>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Không thể xóa</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Chưa có nhân viên nào</h5>
+                            <p class="text-muted">Mời nhân viên đầu tiên để bắt đầu tuyển dụng</p>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#inviteRecruiterModal">
+                                <i class="fas fa-user-plus me-1"></i>
+                                Mời nhân viên
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Invite Recruiter Modal -->
+<div class="modal fade" id="inviteRecruiterModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Mời nhân viên tuyển dụng
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="inviteRecruiterForm">
+                <div class="modal-body">
+                    @if (company != null)
+                    {
+                        <input type="hidden" name="CompanyId" value="@company.CompanyId" />
+                    }
+
+                    <div class="mb-3">
+                        <label for="userEmail" class="form-label">Email người dùng <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="userEmail" name="UserEmail" required
+                               placeholder="Nhập email của người bạn muốn mời">
+                        <div class="form-text">Người dùng phải đã có tài khoản trong hệ thống</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="inviteMessage" class="form-label">Lời nhắn (tùy chọn)</label>
+                        <textarea class="form-control" id="inviteMessage" name="Message" rows="3"
+                                  placeholder="Viết lời mời hoặc giới thiệu về công ty..."></textarea>
+                        <div class="form-text">Tối đa 500 ký tự</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-1"></i>
+                        Gửi lời mời
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Response Modal -->
+<div class="modal fade" id="responseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="responseModalTitle">
+                    <i class="fas fa-reply me-2"></i>
+                    Phản hồi yêu cầu
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="responseForm">
+                <div class="modal-body">
+                    <input type="hidden" id="responseCompanyId" name="CompanyId" />
+                    <input type="hidden" id="responseUserId" name="UserId" />
+                    <input type="hidden" id="responseIsApproved" name="IsApproved" />
+
+                    <div class="alert" id="responseAlert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <span id="responseAlertText"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="responseMessage" class="form-label">Lời nhắn phản hồi (tùy chọn)</label>
+                        <textarea class="form-control" id="responseMessage" name="ResponseMessage" rows="3"
+                                  placeholder="Viết lời nhắn phản hồi..."></textarea>
+                        <div class="form-text">Tối đa 500 ký tự</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn" id="responseSubmitBtn">
+                        <i class="fas fa-check me-1"></i>
+                        Xác nhận
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Custom CSS -->
+<style>
+@@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+.toast-notification {
+    min-width: 300px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    animation: slideInRight 0.3s ease-out;
+}
+
+.toast-notification:hover {
+    transform: translateX(-5px);
+}
+
+#notificationContainer {
+    max-width: 400px;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #495057;
+}
+
+.card-header {
+    border-bottom: 1px solid #dee2e6;
+}
+
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+</style>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Invite Recruiter Form
+    const inviteForm = document.getElementById('inviteRecruiterForm');
+    if (inviteForm) {
+        inviteForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Đang gửi...';
+
+            // Prepare form data
+            const formData = new FormData(this);
+
+            // Add CSRF token to form data
+            const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            formData.append('__RequestVerificationToken', csrfToken);
+
+            // Submit via AJAX
+            fetch('@Url.Action("InviteRecruiter", "Company")', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('success', data.message);
+                    bootstrap.Modal.getInstance(document.getElementById('inviteRecruiterModal')).hide();
+                    this.reset();
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showNotification('error', data.message);
+                    if (data.errors && data.errors.length > 0) {
+                        data.errors.forEach(error => showNotification('error', error));
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('error', 'Có lỗi xảy ra khi gửi lời mời');
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            });
+        });
+    }
+
+    // Response Form
+    const responseForm = document.getElementById('responseForm');
+    if (responseForm) {
+        responseForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Đang xử lý...';
+
+            // Prepare form data
+            const formData = new FormData(this);
+
+            // Add CSRF token to form data
+            const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            formData.append('__RequestVerificationToken', csrfToken);
+
+            // Submit via AJAX
+            fetch('@Url.Action("RespondToRequest", "Company")', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('success', data.message);
+                    bootstrap.Modal.getInstance(document.getElementById('responseModal')).hide();
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showNotification('error', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('error', 'Có lỗi xảy ra khi xử lý yêu cầu');
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            });
+        });
+    }
+});
+
+// Respond to request function
+function respondToRequest(companyId, userId, isApproved, userName) {
+    const modal = document.getElementById('responseModal');
+    const title = document.getElementById('responseModalTitle');
+    const alert = document.getElementById('responseAlert');
+    const alertText = document.getElementById('responseAlertText');
+    const submitBtn = document.getElementById('responseSubmitBtn');
+
+    // Set form values
+    document.getElementById('responseCompanyId').value = companyId;
+    document.getElementById('responseUserId').value = userId;
+    document.getElementById('responseIsApproved').value = isApproved;
+
+    // Update modal content
+    if (isApproved) {
+        title.innerHTML = '<i class="fas fa-check me-2"></i>Phê duyệt yêu cầu';
+        alert.className = 'alert alert-success';
+        alertText.textContent = `Bạn có chắc chắn muốn phê duyệt yêu cầu của ${userName}?`;
+        submitBtn.className = 'btn btn-success';
+        submitBtn.innerHTML = '<i class="fas fa-check me-1"></i>Phê duyệt';
+    } else {
+        title.innerHTML = '<i class="fas fa-times me-2"></i>Từ chối yêu cầu';
+        alert.className = 'alert alert-danger';
+        alertText.textContent = `Bạn có chắc chắn muốn từ chối yêu cầu của ${userName}?`;
+        submitBtn.className = 'btn btn-danger';
+        submitBtn.innerHTML = '<i class="fas fa-times me-1"></i>Từ chối';
+    }
+
+    // Show modal
+    new bootstrap.Modal(modal).show();
+}
+
+// Remove recruiter function
+function removeRecruiter(companyId, userId, userName) {
+    if (confirm(`Bạn có chắc chắn muốn xóa ${userName} khỏi công ty? Hành động này không thể hoàn tác.`)) {
+        // Prepare form data
+        const formData = new FormData();
+        formData.append('companyId', companyId);
+        formData.append('recruiterId', userId);
+        formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+
+        // Submit via AJAX
+        fetch('@Url.Action("RemoveRecruiter", "Company")', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('success', data.message);
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showNotification('error', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('error', 'Có lỗi xảy ra khi xóa nhân viên');
+        });
+    }
+}
+
+// Notification system
+function showNotification(type, message) {
+    const container = document.getElementById('notificationContainer');
+
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show toast-notification`;
+
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    // Add to container
+    container.appendChild(notification);
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.style.animation = 'slideOutRight 0.3s ease-in';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 300);
+        }
+    }, 5000);
+}
+</script>
+}
+
+<!-- Add CSRF Token -->
+@Html.AntiForgeryToken()

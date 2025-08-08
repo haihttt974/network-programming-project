@@ -1,0 +1,41 @@
+@{
+    ViewData["Title"] = "Truy cập bị từ chối";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow border-danger">
+            <div class="card-header bg-danger text-white text-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-ban me-2"></i>Truy cập bị từ chối
+                </h4>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-4">
+                    <i class="fas fa-exclamation-triangle text-warning" style="font-size: 4rem;"></i>
+                </div>
+                
+                <h5 class="card-title text-danger">Bạn không có quyền truy cập trang này!</h5>
+                
+                <p class="card-text text-muted">
+                    Trang bạn đang cố gắng truy cập yêu cầu quyền hạn đặc biệt mà tài khoản của bạn không có.
+                </p>
+
+                <div class="mt-4">
+                    <a href="javascript:history.back()" class="btn btn-secondary me-2">
+                        <i class="fas fa-arrow-left me-1"></i>Quay lại
+                    </a>
+                    <a asp-controller="Account" asp-action="Dashboard" class="btn btn-primary me-2">
+                        <i class="fas fa-home me-1"></i>Trang chủ
+                    </a>
+                    <a href="#" onclick="document.getElementById('logoutForm').submit();" class="btn btn-outline-danger">
+                        <i class="fas fa-sign-out-alt me-1"></i> Đăng xuất
+                    </a>
+
+                    <form id="logoutForm" asp-controller="Auth" asp-action="Logout" method="post" style="display:none;"></form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,302 @@
+@model List<DKyThucTap.Models.DTOs.Position.PositionListDto>
+@{
+    ViewData["Title"] = "Vị trí của tôi";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">
+                        <i class="fas fa-briefcase me-2"></i>
+                        Vị trí của tôi
+                    </h3>
+                    <div class="btn-group">
+                        <a href="@Url.Action("Index", "Position")" class="btn btn-outline-secondary">
+                            <i class="fas fa-list me-1"></i>
+                            Tất cả vị trí
+                        </a>
+                        <a href="@Url.Action("Create", "Position")" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>
+                            Tạo vị trí mới
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    @if (Model.Any())
+                    {
+                        <!-- Statistics Cards -->
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <h4 class="mb-0">@Model.Count</h4>
+                                                <p class="mb-0">Tổng vị trí</p>
+                                            </div>
+                                            <i class="fas fa-briefcase fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <h4 class="mb-0">@Model.Count(p => p.IsActive == true)</h4>
+                                                <p class="mb-0">Đang tuyển</p>
+                                            </div>
+                                            <i class="fas fa-check-circle fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-warning text-white">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <h4 class="mb-0">@Model.Count(p => p.IsActive == false)</h4>
+                                                <p class="mb-0">Tạm dừng</p>
+                                            </div>
+                                            <i class="fas fa-pause-circle fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-info text-white">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <h4 class="mb-0">@Model.Sum(p => p.ApplicationCount)</h4>
+                                                <p class="mb-0">Tổng ứng viên</p>
+                                            </div>
+                                            <i class="fas fa-users fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Positions Table -->
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Vị trí</th>
+                                        <th>Công ty</th>
+                                        <th>Loại</th>
+                                        <th>Địa điểm</th>
+                                        <th>Ứng viên</th>
+                                        <th>Hạn nộp</th>
+                                        <th>Trạng thái</th>
+                                        <th>Ngày tạo</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var position in Model.OrderByDescending(p => p.CreatedAt))
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div>
+                                                    <strong>
+                                                        <a href="@Url.Action("Details", "Position", new { id = position.PositionId })" 
+                                                           class="text-decoration-none">
+                                                            @position.Title
+                                                        </a>
+                                                    </strong>
+                                                    @if (!string.IsNullOrEmpty(position.CategoryName))
+                                                    {
+                                                        <br><small class="text-muted">@position.CategoryName</small>
+                                                    }
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    @if (!string.IsNullOrEmpty(position.CompanyLogoUrl))
+                                                    {
+                                                        <img src="@position.CompanyLogoUrl" alt="@position.CompanyName" 
+                                                             class="me-2" style="width: 30px; height: 30px; object-fit: cover; border-radius: 4px;">
+                                                    }
+                                                    @position.CompanyName
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">@position.PositionType</span>
+                                            </td>
+                                            <td>
+                                                @if (position.IsRemote == true)
+                                                {
+                                                    <span class="badge bg-info me-1">Remote</span>
+                                                }
+                                                <span class="text-muted">@(position.Location ?? "N/A")</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-primary">@position.ApplicationCount</span>
+                                            </td>
+                                            <td>
+                                                @if (position.ApplicationDeadline.HasValue)
+                                                {
+                                                    var isExpired = position.ApplicationDeadline.Value < DateOnly.FromDateTime(DateTime.Now);
+                                                    <span class="@(isExpired ? "text-danger" : "text-muted")">
+                                                        @position.ApplicationDeadline.Value.ToString("dd/MM/yyyy")
+                                                        @if (isExpired)
+                                                        {
+                                                            <br><small class="text-danger">Đã hết hạn</small>
+                                                        }
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Không giới hạn</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input position-status-toggle" 
+                                                           type="checkbox" 
+                                                           @(position.IsActive == true ? "checked" : "")
+                                                           data-position-id="@position.PositionId">
+                                                    <label class="form-check-label">
+                                                        <span class="status-text">
+                                                            @(position.IsActive == true ? "Đang tuyển" : "Tạm dừng")
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="text-muted">
+                                                    @position.CreatedAt?.ToString("dd/MM/yyyy")
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="@Url.Action("Details", "Position", new { id = position.PositionId })"
+                                                       class="btn btn-outline-info" title="Xem chi tiết">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="@Url.Action("Edit", "Position", new { id = position.PositionId })"
+                                                       class="btn btn-outline-primary" title="Chỉnh sửa">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <a href="@Url.Action("History", "Position", new { id = position.PositionId })"
+                                                       class="btn btn-outline-secondary" title="Lịch sử thay đổi">
+                                                        <i class="fas fa-history"></i>
+                                                    </a>
+                                                    @if (position.ApplicationCount == 0)
+                                                    {
+                                                        <button type="button" class="btn btn-outline-danger" 
+                                                                onclick="deletePosition(@position.PositionId)" title="Xóa">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">Bạn chưa tạo vị trí nào</h4>
+                            <p class="text-muted">Tạo vị trí tuyển dụng đầu tiên để bắt đầu tìm kiếm ứng viên</p>
+                            <a href="@Url.Action("Create", "Position")" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>
+                                Tạo vị trí mới
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa vị trí này không?</p>
+                <p class="text-danger"><small>Lưu ý: Chỉ có thể xóa vị trí chưa có ứng viên nào ứng tuyển.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">Xóa</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Toggle position status
+document.addEventListener('DOMContentLoaded', function() {
+    const toggles = document.querySelectorAll('.position-status-toggle');
+    
+    toggles.forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            const positionId = this.dataset.positionId;
+            const isActive = this.checked;
+            const statusText = this.parentElement.querySelector('.status-text');
+            
+            fetch(`/Position/UpdateStatus/${positionId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: `isActive=${isActive}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    statusText.textContent = isActive ? 'Đang tuyển' : 'Tạm dừng';
+                    showToast('success', data.message);
+                } else {
+                    this.checked = !isActive; // Revert toggle
+                    showToast('error', data.message);
+                }
+            })
+            .catch(error => {
+                this.checked = !isActive; // Revert toggle
+                showToast('error', 'Có lỗi xảy ra khi cập nhật trạng thái');
+            });
+        });
+    });
+});
+
+// Delete position
+function deletePosition(positionId) {
+    const deleteForm = document.getElementById('deleteForm');
+    deleteForm.action = `/Position/Delete/${positionId}`;
+    
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+
+// Toast notification function
+function showToast(type, message) {
+    if (type === 'success') {
+        alert('✓ ' + message);
+    } else {
+        alert('✗ ' + message);
+    }
+}
+</script>

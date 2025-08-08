@@ -1,0 +1,1651 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - RealHire</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/DKyThucTap.styles.css" asp-append-version="true" />
+
+    <style>
+        .online-status {
+            font-size: 0.875rem;
+        }
+
+        .online-indicator {
+            position: relative;
+            display: inline-block;
+        }
+
+        .pulse-dot {
+            animation: pulse 2s infinite;
+        }
+
+        @@keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .update-pulse {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #28a745;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .update-pulse.active {
+            animation: updatePulse 2s ease-out;
+        }
+
+        @@keyframes updatePulse {
+            0% {
+                opacity: 0.8;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            50% {
+                opacity: 0.4;
+                transform: translate(-50%, -50%) scale(1.5);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(2);
+            }
+        }
+
+        .online-count-container {
+            transition: all 0.3s ease;
+        }
+
+        #online-count {
+            transition: all 0.3s ease;
+        }
+
+        #online-count.count-updating {
+            transform: scale(1.05);
+            color: #007bff;
+        }
+
+        #online-count.significant-change {
+            animation: significantChange 1s ease-out;
+        }
+
+        @@keyframes significantChange {
+            0% { transform: scale(1); }
+            25% { transform: scale(1.1); color: #28a745; }
+            50% { transform: scale(1.05); }
+            75% { transform: scale(1.02); }
+            100% { transform: scale(1); color: inherit; }
+        }
+
+        #online-number {
+            font-weight: 600;
+            transition: opacity 0.15s ease;
+        }
+
+        #last-updated {
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .online-status:hover #last-updated {
+            opacity: 1;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            position: relative;
+            min-height: 100%;
+        }
+
+        body {
+            display: block;
+            min-height: 100vh;
+            position: relative;
+            margin-bottom: 0;
+            overflow-x: hidden;
+        }
+
+        .main-wrapper {
+            display: block;
+            min-height: auto;
+        }
+
+        .container {
+            display: block;
+            position: relative;
+        }
+
+        .body-content {
+            display: block;
+        }
+
+        main {
+            padding-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .footer {
+            background-color: #f8f9fa;
+            padding: 1rem 0;
+            position: relative;
+            width: 100%;
+            height: auto;
+            z-index: 1;
+            clear: both;
+            box-sizing: border-box;
+            margin-top: 2rem;
+        }
+
+        /* Header stays at top */
+        header {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Additional layout fixes */
+        .navbar {
+            position: relative;
+            z-index: 1030;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            z-index: 1020;
+            max-height: 350px;
+            overflow-y: auto;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        .toast-container {
+            z-index: 1050;
+        }
+
+        .modal {
+            z-index: 1040;
+        }
+
+        .modal-backdrop {
+            z-index: 1039;
+        }
+
+        /* Fix for small content pages */
+        @@media (max-height: 600px) {
+            .main-wrapper {
+                min-height: auto;
+            }
+        }
+
+        /* Responsive footer adjustments */
+        @@media (max-width: 768px) {
+            .footer {
+                margin-top: 1rem;
+            }
+        }
+
+        /* Ensure footer follows content flow */
+        .footer {
+            position: relative !important;
+            bottom: auto !important;
+            margin-top: 2rem;
+        }
+
+        /* Ensure content flows naturally */
+        .main-wrapper {
+            min-height: auto;
+        }
+
+        /* Additional layout improvements */
+        body {
+            overflow-x: hidden;
+        }
+
+        .main-wrapper {
+            overflow-x: hidden;
+        }
+
+        /* Ensure proper spacing */
+        main {
+            margin-bottom: 0;
+        }
+
+        /* Footer styling */
+        .footer {
+            border-top: 1px solid #dee2e6;
+        }
+
+        /* Ensure natural document flow */
+        body {
+            display: block;
+        }
+
+        .main-wrapper {
+            display: block;
+        }
+
+        .container {
+            display: block;
+        }
+
+        /* Remove any flex properties that might cause sticky behavior */
+        body, .main-wrapper, .container {
+            flex: none;
+        }
+
+        /* Ensure footer is not sticky */
+        .footer {
+            position: static !important;
+            bottom: auto !important;
+            top: auto !important;
+        }
+
+        /* Ensure content flows naturally */
+        main {
+            display: block;
+        }
+
+        #online-users-list .dropdown-item-text {
+            white-space: normal;
+            padding: 0.25rem 1rem;
+            transition: background-color 0.2s ease;
+        }
+
+        #online-users-list .dropdown-item-text:hover {
+            background-color: #f8f9fa;
+        }
+
+        .dropdown-header {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        /* Loading animation for dropdown */
+        .loading-spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @@keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @@keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Notification Dropdown Styles */
+        .notification-dropdown {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            border: none;
+        }
+
+        .notification-item {
+            transition: background-color 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .notification-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .notification-item.unread {
+            background-color: #f0f8ff;
+            border-left-color: #007bff;
+        }
+
+        .notification-item.unread:hover {
+            background-color: #e6f3ff;
+        }
+
+        .notification-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .notification-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+            line-height: 1.2;
+        }
+
+        .notification-message {
+            font-size: 0.75rem;
+            color: #6c757d;
+            line-height: 1.3;
+            margin-bottom: 0.25rem;
+        }
+
+        .notification-time {
+            font-size: 0.7rem;
+            color: #adb5bd;
+        }
+
+        .notification-actions {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .notification-item:hover .notification-actions {
+            opacity: 1;
+        }
+
+        #notification-badge {
+            animation: notificationPulse 2s infinite;
+        }
+
+        @@keyframes notificationPulse {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .notification-bell-shake {
+            animation: bellShake 0.5s ease-in-out;
+        }
+
+        @@keyframes bellShake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-10deg); }
+            75% { transform: rotate(10deg); }
+        }
+
+        /* Responsive adjustments */
+        @@media (max-width: 768px) {
+            .online-status {
+                font-size: 0.75rem;
+            }
+
+            #last-updated {
+                display: none;
+            }
+
+            .dropdown-menu {
+                min-width: 250px !important;
+            }
+
+            .notification-dropdown {
+                min-width: 300px !important;
+                max-width: 90vw;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    @RenderSection("Styles", required: false)
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-bold" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="fas fa-briefcase me-2"></i>RealHire
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-lg-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">
+                                <i class="fas fa-home me-1"></i>Trang chủ
+                            </a>
+                        </li>
+
+                        <!-- Positions Menu -->
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Position" asp-action="Index">
+                                <i class="fas fa-briefcase me-1"></i>Việc làm
+                            </a>
+                        </li>
+
+                        <!-- Companies Menu -->
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Company" asp-action="Index">
+                                <i class="fas fa-building me-1"></i>Công ty
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="About" asp-action="Index">
+                                <i class="fas fa-building me-1"></i>Giới thiệu
+                            </a>
+                        </li>
+
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            @if (User.HasClaim("Permission", "create_position") || User.HasClaim("Permission", "create_company"))
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-plus-circle me-1"></i>Quản lý
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        @if (User.HasClaim("Permission", "create_position"))
+                                        {
+                                            <li><a class="dropdown-item" asp-controller="Position" asp-action="Create">
+                                                <i class="fas fa-plus me-1"></i>Đăng tin tuyển dụng</a></li>
+                                            <li><a class="dropdown-item" asp-controller="Position" asp-action="My">
+                                                <i class="fas fa-list me-1"></i>Vị trí của tôi</a></li>
+                                        }
+                                        @if (User.HasClaim("Permission", "create_company"))
+                                        {
+                                            @if (User.HasClaim("Permission", "create_position"))
+                                            {
+                                                <li><hr class="dropdown-divider"></li>
+                                            }
+                                            <li><a class="dropdown-item" asp-controller="Company" asp-action="Create">
+                                                <i class="fas fa-plus me-1"></i>Tạo công ty</a></li>
+                                            <li><a class="dropdown-item" asp-controller="Company" asp-action="My">
+                                                <i class="fas fa-building me-1"></i>Công ty của tôi</a></li>
+                                            <li><a class="dropdown-item" asp-controller="Company" asp-action="MyRequests">
+                                                <i class="fas fa-hourglass-half me-1"></i>Yêu cầu của tôi</a></li>
+                                        }
+                                        <li><a class="dropdown-item" href="#"><i class="fas fa-list me-1"></i>Quản lý tin đăng</a></li>
+                                    </ul>
+                                </li>
+                            }
+
+                            @if (User.HasClaim("Permission", "manage_applications"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#">
+                                        <i class="fas fa-users me-1"></i>Ứng viên
+                                    </a>
+                                </li>
+                            }
+
+                            @if (User.HasClaim("Permission", "create_company"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#">
+                                        <i class="fas fa-building me-1"></i>Công ty
+                                    </a>
+                                </li>
+                            }
+
+                            @if (User.HasClaim("Permission", "manage_users"))
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-cog me-1"></i>Quản trị
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#"><i class="fas fa-users me-1"></i>Quản lý người dùng</a></li>
+                                        <li><a class="dropdown-item" href="#"><i class="fas fa-building me-1"></i>Quản lý công ty</a></li>
+                                        <li><a class="dropdown-item" href="#"><i class="fas fa-star me-1"></i>Duyệt đánh giá</a></li>
+                                    </ul>
+                                </li>
+                            }
+                        }
+                    </ul>
+
+                    <ul class="navbar-nav">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <!-- Notification Bell -->
+                            <li class="nav-item dropdown me-2">
+                                <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown"
+                                   id="notificationDropdown" aria-expanded="false" title="Thông báo">
+                                    <i class="fas fa-bell" style="font-size: 1.1rem;"></i>
+                                    <span id="notification-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                          style="font-size: 0.6rem; display: none;">
+                                        0
+                                    </span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationDropdown"
+                                    style="min-width: 350px; max-height: 400px;">
+                                    <li>
+                                        <div class="dropdown-header d-flex justify-content-between align-items-center">
+                                            <span>Thông báo</span>
+                                            <div>
+                                                <button class="btn btn-sm btn-outline-primary me-1" onclick="markAllNotificationsAsRead()"
+                                                        title="Đánh dấu tất cả đã đọc">
+                                                    <i class="fas fa-check-double" style="font-size: 10px;"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-secondary" onclick="refreshNotifications()"
+                                                        title="Làm mới">
+                                                    <i class="fas fa-sync-alt" style="font-size: 10px;"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <div id="notification-list" style="max-height: 300px; overflow-y: auto;">
+                                        <li>
+                                            <span class="dropdown-item-text text-muted small text-center py-3">
+                                                <span class="loading-spinner me-2"></span>Đang tải thông báo...
+                                            </span>
+                                        </li>
+                                    </div>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <div class="dropdown-item-text text-center">
+                                            <a href="#" class="btn btn-sm btn-primary" onclick="viewAllNotifications()">
+                                                <i class="fas fa-list me-1"></i>Xem tất cả
+                                            </a>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user-circle me-1"></i>
+                                    @(User.FindFirst("FullName")?.Value ?? User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value)
+                                    <span class="badge bg-light text-primary ms-1">@User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Account" asp-action="Dashboard">
+                                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Account" asp-action="Profile">
+                                            <i class="fas fa-user-edit me-1"></i>Chỉnh sửa thông tin
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Account" asp-action="Settings">
+                                            <i class="fas fa-cog me-1"></i>Cài đặt
+                                        </a>
+                                    </li>
+                                    @if (User.HasClaim("Permission", "send_messages"))
+                                    {
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item d-flex align-items-center justify-content-between"
+                                               asp-controller="Messages" asp-action="Index" id="messagesLink">
+                                                <div>
+                                                    <i class="fas fa-envelope me-1"></i>Tin nhắn
+                                                </div>
+                                                <span id="unreadBadge" class="badge bg-danger ms-1 d-none">0</span>
+                                            </a>
+                                        </li>
+                                    }
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <i class="fas fa-sign-out-alt me-1"></i>Đăng xuất
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Auth" asp-action="Login">
+                                    <i class="fas fa-sign-in-alt me-1"></i>Đăng nhập
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Auth" asp-action="Register">
+                                    <i class="fas fa-user-plus me-1"></i>Đăng ký
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="main-wrapper">
+        <div class="container">
+            <main role="main" class="pb-3">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    &copy; 2025 - RealHire - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="d-flex align-items-center justify-content-end">
+                        <div class="online-status me-3">
+                            <div class="d-flex align-items-center">
+                                <div class="online-indicator me-2">
+                                    <i class="fas fa-circle text-success pulse-dot" style="font-size: 8px;"></i>
+                                    <div id="update-indicator" class="update-pulse"></div>
+                                </div>
+                                <div class="online-count-container">
+                                    <span id="online-count" class="small">
+                                        <span id="online-number">0</span> người đang online
+                                    </span>
+                                    <div id="last-updated" class="text-muted" style="font-size: 10px; line-height: 1;">
+                                        Đang tải...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-link btn-sm text-muted dropdown-toggle" type="button"
+                                    id="onlineUsersDropdown" data-bs-toggle="dropdown" aria-expanded="false"
+                                    title="Xem danh sách người dùng online">
+                                <i class="fas fa-users"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="onlineUsersDropdown" style="min-width: 280px;">
+                                <li>
+                                    <div class="dropdown-header d-flex justify-content-between align-items-center">
+                                        <span>Người dùng đang online</span>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="window.onlineUserManager?.loadOnlineUsers()" title="Làm mới danh sách">
+                                            <i class="fas fa-sync-alt" style="font-size: 10px;"></i>
+                                        </button>
+                                    </div>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <div id="online-users-list">
+                                    <li><span class="dropdown-item-text text-muted small">Đang tải...</span></li>
+                                </div>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <div class="dropdown-item-text text-center">
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>
+                                            Tự động cập nhật mỗi 30 giây
+                                        </small>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <!-- Online Users Management -->
+    <script>
+    class OnlineUserManager {
+        constructor() {
+            this.connectionId = null;
+            this.heartbeatInterval = null;
+            this.updateInterval = null;
+            this.isAuthenticated = @(User.Identity.IsAuthenticated ? "true" : "false");
+
+            if (this.isAuthenticated) {
+                this.init();
+            } else {
+                // For non-authenticated users, just update the count
+                this.startCountUpdates();
+            }
+        }
+
+        async init() {
+            try {
+                await this.connect();
+                this.startHeartbeat();
+                this.startCountUpdates();
+                this.setupEventListeners();
+            } catch (error) {
+                console.error('Failed to initialize online user manager:', error);
+                // Fallback to just updating count
+                this.startCountUpdates();
+            }
+        }
+
+        async connect() {
+            try {
+                console.log('Attempting to connect...');
+
+                const requestBody = {
+                    clientInfo: this.getClientInfo()
+                };
+
+                console.log('Request body:', requestBody);
+
+                const response = await fetch('/api/OnlineUsers/connect', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                console.log('Response status:', response.status);
+
+                const responseText = await response.text();
+                console.log('Response text:', responseText);
+
+                if (response.ok) {
+                    const data = JSON.parse(responseText);
+                    this.connectionId = data.connectionId;
+                    console.log('Connected successfully with ID:', this.connectionId, 'User ID:', data.userId);
+                } else {
+                    console.error('Connect failed with status:', response.status, 'Response:', responseText);
+                    throw new Error(`Failed to connect: ${response.status} - ${responseText}`);
+                }
+            } catch (error) {
+                console.error('Connection error:', error);
+                throw error;
+            }
+        }
+
+        async disconnect() {
+            if (this.connectionId) {
+                try {
+                    await fetch('/api/OnlineUsers/disconnect', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            connectionId: this.connectionId
+                        })
+                    });
+                } catch (error) {
+                    console.error('Disconnect error:', error);
+                }
+            }
+
+            this.cleanup();
+        }
+
+        async sendHeartbeat() {
+            if (this.connectionId) {
+                try {
+                    await fetch('/api/OnlineUsers/heartbeat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            connectionId: this.connectionId
+                        })
+                    });
+                } catch (error) {
+                    console.error('Heartbeat error:', error);
+                }
+            }
+        }
+
+        async updateOnlineCount() {
+            // Use the enhanced version with animation
+            await this.updateOnlineCountWithAnimation();
+        }
+
+        async loadOnlineUsers() {
+            try {
+                // Show loading indicator
+                document.getElementById('online-users-list').innerHTML =
+                    '<li><span class="dropdown-item-text text-muted small"><span class="loading-spinner me-2"></span>Đang tải...</span></li>';
+
+                const response = await fetch('/api/OnlineUsers/list');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.renderOnlineUsers(data.users);
+
+                    // Update the count in header if different
+                    const currentCount = parseInt(document.getElementById('online-number').textContent) || 0;
+                    if (data.count !== currentCount) {
+                        this.animateCountUpdate(currentCount, data.count);
+                    }
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Error loading online users:', error);
+                document.getElementById('online-users-list').innerHTML =
+                    '<li><span class="dropdown-item-text text-danger small"><i class="fas fa-exclamation-triangle me-1"></i>Lỗi khi tải danh sách</span></li>';
+            }
+        }
+
+        renderOnlineUsers(users) {
+            const container = document.getElementById('online-users-list');
+
+            if (users.length === 0) {
+                container.innerHTML = `
+                    <li>
+                        <span class="dropdown-item-text text-muted small text-center py-3">
+                            <i class="fas fa-user-slash me-2"></i>
+                            Không có người dùng nào online
+                        </span>
+                    </li>`;
+                return;
+            }
+
+            const html = users.map((user, index) => {
+                const lastActivity = user.lastActivity ? new Date(user.lastActivity) : null;
+                const minutesAgo = lastActivity ? Math.floor((new Date() - lastActivity) / (1000 * 60)) : null;
+
+                let activityText = '';
+                let statusClass = 'text-success';
+
+                if (minutesAgo !== null) {
+                    if (minutesAgo < 1) {
+                        activityText = 'Vừa xong';
+                    } else if (minutesAgo < 5) {
+                        activityText = `${minutesAgo}p trước`;
+                    } else {
+                        activityText = `${minutesAgo}p trước`;
+                        statusClass = 'text-warning';
+                    }
+                }
+
+                return `
+                <li>
+                    <div class="dropdown-item-text d-flex align-items-center py-2" style="animation: fadeInUp 0.3s ease ${index * 0.1}s both;">
+                        ${user.profilePictureUrl ?
+                            `<img src="${user.profilePictureUrl}" alt="${user.userName}" class="rounded-circle me-2" style="width: 28px; height: 28px; object-fit: cover; border: 2px solid #28a745;">` :
+                            `<div class="rounded-circle me-2 bg-primary d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 11px; color: white; border: 2px solid #28a745;">${user.userName.charAt(0).toUpperCase()}</div>`
+                        }
+                        <div class="flex-grow-1">
+                            <div class="small fw-semibold text-dark">${user.userName}</div>
+                            <div class="d-flex align-items-center">
+                                ${user.connectionCount > 1 ?
+                                    `<span class="badge bg-info me-1" style="font-size: 9px;">${user.connectionCount} kết nối</span>` :
+                                    ''
+                                }
+                                ${activityText ?
+                                    `<span class="text-muted" style="font-size: 9px;">${activityText}</span>` :
+                                    ''
+                                }
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <i class="fas fa-circle ${statusClass}" style="font-size: 6px;" title="Online"></i>
+                        </div>
+                    </div>
+                </li>`;
+            }).join('');
+
+            container.innerHTML = html;
+        }
+
+        startHeartbeat() {
+            this.heartbeatInterval = setInterval(() => {
+                this.sendHeartbeat();
+            }, 30000); // Send heartbeat every 30 seconds
+        }
+
+        startCountUpdates() {
+            // Update immediately
+            this.updateOnlineCount();
+
+            // Then update every 30 seconds
+            this.updateInterval = setInterval(() => {
+                this.updateOnlineCount();
+            }, 30000);
+        }
+
+        async updateOnlineCountWithAnimation() {
+            try {
+                const response = await fetch('/api/OnlineUsers/count');
+                if (response.ok) {
+                    const data = await response.json();
+                    const newCount = data.count;
+                    const currentCount = parseInt(document.getElementById('online-number').textContent) || 0;
+
+                    // Only update if count has changed
+                    if (newCount !== currentCount) {
+                        this.animateCountUpdate(currentCount, newCount);
+                        this.showUpdateIndicator();
+                    }
+
+                    // Update timestamp
+                    this.updateLastRefreshTime();
+                } else {
+                    console.warn('Failed to fetch online count:', response.status);
+                }
+            } catch (error) {
+                console.error('Error updating online count:', error);
+                // Don't change the displayed count on error
+            }
+        }
+
+        animateCountUpdate(oldCount, newCount) {
+            const countElement = document.getElementById('online-number');
+            const containerElement = document.getElementById('online-count');
+
+            // Add update animation class
+            containerElement.classList.add('count-updating');
+
+            // Animate the number change
+            if (oldCount !== newCount) {
+                // Fade out old number
+                countElement.style.opacity = '0.5';
+
+                setTimeout(() => {
+                    // Update the number
+                    countElement.textContent = newCount;
+
+                    // Fade in new number
+                    countElement.style.opacity = '1';
+
+                    // Add pulse effect for significant changes
+                    if (Math.abs(newCount - oldCount) > 1) {
+                        containerElement.classList.add('significant-change');
+                        setTimeout(() => {
+                            containerElement.classList.remove('significant-change');
+                        }, 1000);
+                    }
+                }, 150);
+            }
+
+            // Remove update animation class
+            setTimeout(() => {
+                containerElement.classList.remove('count-updating');
+            }, 500);
+        }
+
+        showUpdateIndicator() {
+            const indicator = document.getElementById('update-indicator');
+            if (indicator) {
+                indicator.classList.add('active');
+                setTimeout(() => {
+                    indicator.classList.remove('active');
+                }, 2000);
+            }
+        }
+
+        updateLastRefreshTime() {
+            const timestampElement = document.getElementById('last-updated');
+            if (timestampElement) {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('vi-VN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                timestampElement.textContent = `Cập nhật lúc ${timeString}`;
+                timestampElement.title = `Lần cập nhật cuối: ${now.toLocaleString('vi-VN')}`;
+            }
+        }
+
+        setupEventListeners() {
+            // Load online users when dropdown is opened
+            const dropdown = document.getElementById('onlineUsersDropdown');
+            if (dropdown) {
+                dropdown.addEventListener('show.bs.dropdown', () => {
+                    this.loadOnlineUsers();
+                });
+
+                // Also load on click for immediate feedback
+                dropdown.addEventListener('click', () => {
+                    // Small delay to ensure dropdown is shown
+                    setTimeout(() => {
+                        this.loadOnlineUsers();
+                    }, 100);
+                });
+            }
+
+            // Cleanup on page unload
+            window.addEventListener('beforeunload', () => {
+                this.disconnect();
+            });
+
+            // Handle visibility change (tab switching)
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    // Page is hidden, reduce heartbeat frequency
+                    if (this.heartbeatInterval) {
+                        clearInterval(this.heartbeatInterval);
+                        this.heartbeatInterval = setInterval(() => {
+                            this.sendHeartbeat();
+                        }, 60000); // 1 minute when hidden
+                    }
+
+                    // Also reduce count update frequency
+                    if (this.updateInterval) {
+                        clearInterval(this.updateInterval);
+                        this.updateInterval = setInterval(() => {
+                            this.updateOnlineCount();
+                        }, 60000); // 1 minute when hidden
+                    }
+                } else {
+                    // Page is visible, restore normal frequencies
+                    if (this.heartbeatInterval) {
+                        clearInterval(this.heartbeatInterval);
+                        this.startHeartbeat();
+                    }
+
+                    if (this.updateInterval) {
+                        clearInterval(this.updateInterval);
+                        this.startCountUpdates();
+                    }
+
+                    // Immediate update when page becomes visible
+                    this.updateOnlineCount();
+                }
+            });
+
+            // Handle online/offline events
+            window.addEventListener('online', () => {
+                console.log('Connection restored, updating online status');
+                this.updateOnlineCount();
+                if (this.isAuthenticated && !this.connectionId) {
+                    // Try to reconnect if we lost connection
+                    this.connect().catch(console.error);
+                }
+            });
+
+            window.addEventListener('offline', () => {
+                console.log('Connection lost');
+                // Don't update count when offline to avoid errors
+            });
+        }
+
+        cleanup() {
+            if (this.heartbeatInterval) {
+                clearInterval(this.heartbeatInterval);
+                this.heartbeatInterval = null;
+            }
+
+            if (this.updateInterval) {
+                clearInterval(this.updateInterval);
+                this.updateInterval = null;
+            }
+
+            this.connectionId = null;
+        }
+
+        getClientInfo() {
+            return `${navigator.userAgent.substring(0, 100)} - ${window.location.href}`;
+        }
+
+        // Method to manually refresh count (can be called from console for debugging)
+        async forceRefresh() {
+            console.log('Force refreshing online count...');
+            await this.updateOnlineCount();
+            console.log('Force refresh completed');
+        }
+
+        // Get current status for debugging
+        getStatus() {
+            return {
+                isAuthenticated: this.isAuthenticated,
+                connectionId: this.connectionId,
+                hasHeartbeat: !!this.heartbeatInterval,
+                hasUpdateInterval: !!this.updateInterval,
+                currentCount: document.getElementById('online-number')?.textContent || 'N/A',
+                signalRConnected: this.isSignalRConnected,
+                signalRState: this.signalRConnection?.state || 'Not initialized'
+            };
+        }
+
+        // Method to manually reconnect SignalR
+        async reconnectSignalR() {
+            try {
+                if (this.signalRConnection) {
+                    await this.signalRConnection.stop();
+                }
+                await this.initializeSignalR();
+                console.log('SignalR reconnected manually');
+                return true;
+            } catch (error) {
+                console.error('Failed to reconnect SignalR:', error);
+                return false;
+            }
+        }
+    }
+
+    // Notification Manager Class
+    class NotificationManager {
+        constructor() {
+            this.isAuthenticated = @(User.Identity.IsAuthenticated ? "true" : "false");
+            this.updateInterval = null;
+            this.lastUpdateTime = null;
+            this.signalRConnection = null;
+            this.isSignalRConnected = false;
+
+            if (this.isAuthenticated) {
+                this.init();
+            }
+        }
+
+        async init() {
+            try {
+                await this.initializeSignalR();
+                await this.updateNotificationCount();
+                this.startPeriodicUpdates();
+                this.setupEventListeners();
+            } catch (error) {
+                console.error('Failed to initialize notification manager:', error);
+            }
+        }
+
+        async initializeSignalR() {
+            try {
+                // Create SignalR connection
+                this.signalRConnection = new signalR.HubConnectionBuilder()
+                    .withUrl("/notificationHub")
+                    .withAutomaticReconnect([0, 2000, 10000, 30000]) // Retry intervals
+                    .build();
+
+                // Set up event handlers
+                this.setupSignalREventHandlers();
+
+                // Start connection
+                await this.signalRConnection.start();
+                this.isSignalRConnected = true;
+                console.log('SignalR connected for notifications');
+
+            } catch (error) {
+                console.error('SignalR connection failed:', error);
+                this.isSignalRConnected = false;
+                // Fallback to polling if SignalR fails
+            }
+        }
+
+        setupSignalREventHandlers() {
+            if (!this.signalRConnection) return;
+
+            // Handle new notifications
+            this.signalRConnection.on("NewNotification", (notification) => {
+                this.handleNewNotification(notification);
+            });
+
+            // Handle notification count updates
+            this.signalRConnection.on("NotificationCountUpdate", (data) => {
+                this.updateBadge(data.count);
+                console.log('Received count update via SignalR:', data.count);
+            });
+
+            // Handle system notifications (broadcasts)
+            this.signalRConnection.on("SystemNotification", (notification) => {
+                this.handleSystemNotification(notification);
+            });
+
+            // Handle connection events
+            this.signalRConnection.on("Connected", (data) => {
+                console.log('SignalR notification hub connected:', data);
+            });
+
+            // Handle reconnection
+            this.signalRConnection.onreconnected((connectionId) => {
+                console.log('SignalR reconnected:', connectionId);
+                this.isSignalRConnected = true;
+                // Refresh notifications after reconnection
+                this.updateNotificationCount();
+            });
+
+            // Handle disconnection
+            this.signalRConnection.onclose((error) => {
+                console.log('SignalR disconnected:', error);
+                this.isSignalRConnected = false;
+            });
+        }
+
+        async updateNotificationCount() {
+            try {
+                const response = await fetch('/api/Notification/unread-count');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.updateBadge(data.count);
+                    this.lastUpdateTime = new Date();
+                }
+            } catch (error) {
+                console.error('Error updating notification count:', error);
+            }
+        }
+
+        updateBadge(count) {
+            const badge = document.getElementById('notification-badge');
+            if (badge) {
+                if (count > 0) {
+                    badge.textContent = count > 99 ? '99+' : count.toString();
+                    badge.style.display = 'block';
+
+                    // Add shake animation to bell
+                    const bell = badge.closest('.nav-link').querySelector('.fa-bell');
+                    if (bell) {
+                        bell.classList.add('notification-bell-shake');
+                        setTimeout(() => {
+                            bell.classList.remove('notification-bell-shake');
+                        }, 500);
+                    }
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }
+
+        handleNewNotification(notification) {
+            try {
+                console.log('Received new notification via SignalR:', notification);
+
+                // Update badge count immediately
+                this.updateNotificationCount();
+
+                // Show toast notification
+                this.showNotificationToast(notification);
+
+                // If dropdown is open, refresh the list
+                const dropdown = document.getElementById('notificationDropdown');
+                if (dropdown && dropdown.getAttribute('aria-expanded') === 'true') {
+                    setTimeout(() => {
+                        this.loadNotifications();
+                    }, 500); // Small delay to ensure DB is updated
+                }
+
+                // Trigger custom event for other parts of the app
+                window.dispatchEvent(new CustomEvent('newNotification', {
+                    detail: notification
+                }));
+
+            } catch (error) {
+                console.error('Error handling new notification:', error);
+            }
+        }
+
+        handleSystemNotification(notification) {
+            try {
+                console.log('Received system notification via SignalR:', notification);
+
+                // Show prominent toast for system notifications
+                this.showNotificationToast(notification, true);
+
+                // Update count
+                this.updateNotificationCount();
+
+                // Trigger custom event
+                window.dispatchEvent(new CustomEvent('systemNotification', {
+                    detail: notification
+                }));
+
+            } catch (error) {
+                console.error('Error handling system notification:', error);
+            }
+        }
+
+        showNotificationToast(notification, isSystem = false) {
+            try {
+                // Create toast element
+                const toastContainer = this.getOrCreateToastContainer();
+                const toastId = `toast-${Date.now()}`;
+
+                const toastHtml = `
+                    <div id="${toastId}" class="toast ${isSystem ? 'border-danger' : 'border-primary'}" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+                        <div class="toast-header ${isSystem ? 'bg-danger text-white' : 'bg-primary text-white'}">
+                            <i class="${notification.iconClass} me-2"></i>
+                            <strong class="me-auto">${notification.title}</strong>
+                            <small>Vừa xong</small>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${notification.message}
+                            ${notification.notificationId ?
+                                `<div class="mt-2">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="markNotificationAsRead(${notification.notificationId})">
+                                        Đánh dấu đã đọc
+                                    </button>
+                                </div>` : ''
+                            }
+                        </div>
+                    </div>
+                `;
+
+                toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+
+                // Initialize and show toast
+                const toastElement = document.getElementById(toastId);
+                const toast = new bootstrap.Toast(toastElement);
+                toast.show();
+
+                // Remove toast element after it's hidden
+                toastElement.addEventListener('hidden.bs.toast', () => {
+                    toastElement.remove();
+                });
+
+            } catch (error) {
+                console.error('Error showing notification toast:', error);
+                // Fallback to simple alert
+                alert(`${notification.title}: ${notification.message}`);
+            }
+        }
+
+        getOrCreateToastContainer() {
+            let container = document.getElementById('notification-toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'notification-toast-container';
+                container.className = 'toast-container position-fixed top-0 end-0 p-3';
+                container.style.zIndex = '9999';
+                document.body.appendChild(container);
+            }
+            return container;
+        }
+
+        async loadNotifications() {
+            try {
+                const listContainer = document.getElementById('notification-list');
+                if (!listContainer) return;
+
+                // Show loading
+                listContainer.innerHTML = `
+                    <li>
+                        <span class="dropdown-item-text text-muted small text-center py-3">
+                            <span class="loading-spinner me-2"></span>Đang tải thông báo...
+                        </span>
+                    </li>`;
+
+                const response = await fetch('/api/Notification?pageSize=10');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.renderNotifications(data.notifications);
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                const listContainer = document.getElementById('notification-list');
+                if (listContainer) {
+                    listContainer.innerHTML = `
+                        <li>
+                            <span class="dropdown-item-text text-danger small text-center py-3">
+                                <i class="fas fa-exclamation-triangle me-1"></i>Lỗi khi tải thông báo
+                            </span>
+                        </li>`;
+                }
+            }
+        }
+
+        renderNotifications(notifications) {
+            const listContainer = document.getElementById('notification-list');
+            if (!listContainer) return;
+
+            if (notifications.length === 0) {
+                listContainer.innerHTML = `
+                    <li>
+                        <span class="dropdown-item-text text-muted small text-center py-3">
+                            <i class="fas fa-bell-slash me-2"></i>Không có thông báo nào
+                        </span>
+                    </li>`;
+                return;
+            }
+
+            const html = notifications.map(notification => `
+                <li>
+                    <div class="dropdown-item-text notification-item ${!notification.isRead ? 'unread' : ''}"
+                         data-notification-id="${notification.notificationId}">
+                        <div class="d-flex align-items-start p-2">
+                            <div class="notification-icon bg-light ${notification.colorClass} me-3">
+                                <i class="${notification.iconClass}"></i>
+                            </div>
+                            <div class="notification-content">
+                                <div class="notification-title">${notification.title}</div>
+                                <div class="notification-message">${notification.message}</div>
+                                <div class="notification-time">${notification.timeAgo}</div>
+                            </div>
+                            <div class="notification-actions ms-2">
+                                ${!notification.isRead ?
+                                    `<button class="btn btn-sm btn-outline-primary" onclick="markNotificationAsRead(${notification.notificationId})" title="Đánh dấu đã đọc">
+                                        <i class="fas fa-check" style="font-size: 10px;"></i>
+                                    </button>` : ''
+                                }
+                                <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteNotification(${notification.notificationId})" title="Xóa">
+                                    <i class="fas fa-trash" style="font-size: 10px;"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            `).join('');
+
+            listContainer.innerHTML = html;
+        }
+
+        startPeriodicUpdates() {
+            // Update count every 60 seconds
+            this.updateInterval = setInterval(() => {
+                this.updateNotificationCount();
+            }, 60000);
+        }
+
+        setupEventListeners() {
+            // Load notifications when dropdown is opened
+            const dropdown = document.getElementById('notificationDropdown');
+            if (dropdown) {
+                dropdown.addEventListener('show.bs.dropdown', () => {
+                    this.loadNotifications();
+                });
+            }
+
+            // Handle visibility change
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) {
+                    // Page became visible, update immediately
+                    this.updateNotificationCount();
+                }
+            });
+
+            // Cleanup on page unload
+            window.addEventListener('beforeunload', () => {
+                if (this.updateInterval) {
+                    clearInterval(this.updateInterval);
+                }
+
+                // Cleanup SignalR connection
+                if (this.signalRConnection && this.isSignalRConnected) {
+                    this.signalRConnection.stop();
+                }
+            });
+        }
+
+        // Public methods for external use
+        async markAsRead(notificationId) {
+            try {
+                const response = await fetch(`/api/Notification/mark-read/${notificationId}`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    // Update UI
+                    const notificationElement = document.querySelector(`[data-notification-id="${notificationId}"]`);
+                    if (notificationElement) {
+                        notificationElement.classList.remove('unread');
+                        const actionsContainer = notificationElement.querySelector('.notification-actions');
+                        if (actionsContainer) {
+                            const readButton = actionsContainer.querySelector('.btn-outline-primary');
+                            if (readButton) {
+                                readButton.remove();
+                            }
+                        }
+                    }
+
+                    // Update count
+                    await this.updateNotificationCount();
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+                return false;
+            }
+        }
+
+        async delete(notificationId) {
+            try {
+                const response = await fetch(`/api/Notification/${notificationId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    // Remove from UI
+                    const notificationElement = document.querySelector(`[data-notification-id="${notificationId}"]`);
+                    if (notificationElement) {
+                        notificationElement.closest('li').remove();
+                    }
+
+                    // Update count
+                    await this.updateNotificationCount();
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Error deleting notification:', error);
+                return false;
+            }
+        }
+
+        async markAllAsRead() {
+            try {
+                const response = await fetch('/api/Notification/mark-all-read', {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    // Reload notifications
+                    await this.loadNotifications();
+                    await this.updateNotificationCount();
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Error marking all notifications as read:', error);
+                return false;
+            }
+        }
+    }
+
+    // Global notification functions
+    async function markNotificationAsRead(notificationId) {
+        if (window.notificationManager) {
+            const success = await window.notificationManager.markAsRead(notificationId);
+            if (!success) {
+                alert('Không thể đánh dấu thông báo đã đọc. Vui lòng thử lại.');
+            }
+        }
+    }
+
+    async function deleteNotification(notificationId) {
+        if (confirm('Bạn có chắc chắn muốn xóa thông báo này?')) {
+            if (window.notificationManager) {
+                const success = await window.notificationManager.delete(notificationId);
+                if (!success) {
+                    alert('Không thể xóa thông báo. Vui lòng thử lại.');
+                }
+            }
+        }
+    }
+
+    async function markAllNotificationsAsRead() {
+        if (window.notificationManager) {
+            const success = await window.notificationManager.markAllAsRead();
+            if (success) {
+                // Show success message briefly
+                const dropdown = document.querySelector('.notification-dropdown');
+                if (dropdown) {
+                    const originalHeader = dropdown.querySelector('.dropdown-header span').textContent;
+                    dropdown.querySelector('.dropdown-header span').textContent = 'Đã đánh dấu tất cả!';
+                    dropdown.querySelector('.dropdown-header span').style.color = '#28a745';
+
+                    setTimeout(() => {
+                        dropdown.querySelector('.dropdown-header span').textContent = originalHeader;
+                        dropdown.querySelector('.dropdown-header span').style.color = '';
+                    }, 2000);
+                }
+            } else {
+                alert('Không thể đánh dấu tất cả thông báo. Vui lòng thử lại.');
+            }
+        }
+    }
+
+    async function refreshNotifications() {
+        if (window.notificationManager) {
+            await window.notificationManager.loadNotifications();
+            await window.notificationManager.updateNotificationCount();
+        }
+    }
+
+    function viewAllNotifications() {
+        window.location.href = '/NotificationView';
+    }
+
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        window.onlineUserManager = new OnlineUserManager();
+        window.notificationManager = new NotificationManager();
+    });
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <!-- Add CSRF Token for AJAX requests -->
+    @Html.AntiForgeryToken()
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+        async function updateUnreadMessages() {
+            try {
+                const response = await fetch('/Messages/UnreadCount');
+                if (response.ok) {
+                    const data = await response.json();
+                    const badge = document.getElementById("unreadBadge");
+
+                    if (data.unread > 0) {
+                        badge.textContent = data.unread;
+                        badge.classList.remove("d-none");
+                    } else {
+                        badge.classList.add("d-none");
+                    }
+                }
+            } catch (error) {
+                console.error("Lỗi khi lấy số tin nhắn chưa đọc:", error);
+            }
+        }
+
+        // Gọi lần đầu ngay khi load
+        updateUnreadMessages();
+
+        // Cập nhật lại mỗi 3 giây
+        setInterval(updateUnreadMessages, 3000);
+
+        // Cập nhật khi load trang
+        $(document).ready(function () {
+            updateUnreadMessages();
+        });
+    </script>
+    @await Html.PartialAsync("_Toast")
+</body>
+</html>

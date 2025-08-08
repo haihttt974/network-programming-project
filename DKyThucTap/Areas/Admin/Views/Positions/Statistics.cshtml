@@ -1,0 +1,382 @@
+﻿@model DKyThucTap.Areas.Admin.Controllers.PositionStatisticsViewModel
+@{
+    ViewData["Title"] = "Thống kê vị trí tuyển dụng";
+    Layout = "~/Views/Shared/_Layout_Admin.cshtml";
+}
+
+<!-- Statistics Overview -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-6">
+        <div class="small-box bg-info">
+            <div class="inner">
+                <h3>@Model.TotalPositions</h3>
+                <p>Tổng vị trí</p>
+            </div>
+            <div class="icon">
+                <i class="fas fa-briefcase"></i>
+            </div>
+            <div class="small-box-footer">
+                Tất cả vị trí tuyển dụng <i class="fas fa-arrow-circle-right"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-6">
+        <div class="small-box bg-success">
+            <div class="inner">
+                <h3>@Model.ActivePositions</h3>
+                <p>Đang hoạt động</p>
+            </div>
+            <div class="icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="small-box-footer">
+                @(Model.TotalPositions > 0 ? Math.Round((double)Model.ActivePositions / Model.TotalPositions * 100, 1) : 0)% tổng số vị trí
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-6">
+        <div class="small-box bg-warning">
+            <div class="inner">
+                <h3>@Model.ExpiredPositions</h3>
+                <p>Đã hết hạn</p>
+            </div>
+            <div class="icon">
+                <i class="fas fa-calendar-times"></i>
+            </div>
+            <div class="small-box-footer">
+                Cần xem xét gia hạn <i class="fas fa-arrow-circle-right"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-6">
+        <div class="small-box bg-danger">
+            <div class="inner">
+                <h3>@Model.TotalApplications</h3>
+                <p>Đơn ứng tuyển</p>
+            </div>
+            <div class="icon">
+                <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="small-box-footer">
+                Trung bình @(Model.TotalPositions > 0 ? Math.Round((double)Model.TotalApplications / Model.TotalPositions, 1) : 0) đơn/vị trí
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Position Types Chart -->
+    <div class="col-md-6">
+        <div class="card card-primary">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-chart-pie"></i>
+                    Phân bố theo loại vị trí
+                </h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="positionTypesChart" style="min-height: 250px; height: 250px;"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Position Types Table -->
+    <div class="col-md-6">
+        <div class="card card-info">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-list"></i>
+                    Chi tiết theo loại
+                </h3>
+            </div>
+            <div class="card-body table-responsive p-0">
+                @if (Model.PositionsByType != null && Model.PositionsByType.Any())
+                {
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Loại vị trí</th>
+                                <th class="text-center">Tổng</th>
+                                <th class="text-center">Hoạt động</th>
+                                <th class="text-center">Tỷ lệ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.PositionsByType)
+                            {
+                                var percentage = item.Count > 0 ? Math.Round((double)item.ActiveCount / item.Count * 100, 1) : 0;
+                                <tr>
+                                    <td>
+                                        <span class="badge badge-secondary">@item.Type</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <strong>@item.Count</strong>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="text-success">@item.ActiveCount</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="progress progress-xs">
+                                            <div class="progress-bar bg-success" style="width: @percentage%"></div>
+                                        </div>
+                                        <small class="text-muted">@percentage%</small>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-pie fa-3x text-gray-300 mb-3"></i>
+                        <p class="text-gray-500">Chưa có dữ liệu thống kê.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Companies -->
+<div class="row">
+    <div class="col-12">
+        <div class="card card-success">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-building"></i>
+                    Top 10 công ty có nhiều vị trí tuyển dụng nhất
+                </h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                @if (Model.TopCompaniesByPositions != null && Model.TopCompaniesByPositions.Any())
+                {
+                    <div class="row">
+                        <div class="col-md-8">
+                            <canvas id="topCompaniesChart" style="min-height: 300px; height: 300px;"></canvas>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Thứ hạng</th>
+                                            <th>Công ty</th>
+                                            <th class="text-center">Vị trí</th>
+                                            <th class="text-center">Ứng tuyển</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (int i = 0; i < Model.TopCompaniesByPositions.Count && i < 5; i++)
+                                        {
+                                            var company = Model.TopCompaniesByPositions[i];
+                                            <tr>
+                                                <td>
+                                                    <span class="badge badge-@(i == 0 ? "warning" : i == 1 ? "secondary" : i == 2 ? "success" : "info")">
+                                                        #@(i + 1)
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <small>@company.CompanyName</small>
+                                                </td>
+                                                <td class="text-center">
+                                                    <strong>@company.TotalPositions</strong>
+                                                    <br><small class="text-success">@company.ActivePositions hoạt động</small>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="text-primary">@company.TotalApplications</span>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4">
+                        <i class="fas fa-building fa-3x text-gray-300 mb-3"></i>
+                        <p class="text-gray-500">Chưa có dữ liệu công ty.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row">
+    <div class="col-md-4">
+        <div class="info-box">
+            <span class="info-box-icon bg-info"><i class="fas fa-percentage"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Tỷ lệ vị trí hoạt động</span>
+                <span class="info-box-number">
+                    @(Model.TotalPositions > 0 ? Math.Round((double)Model.ActivePositions / Model.TotalPositions * 100, 1) : 0)%
+                </span>
+                <div class="progress">
+                    <div class="progress-bar bg-info" style="width: @(Model.TotalPositions > 0 ? Math.Round((double)Model.ActivePositions / Model.TotalPositions * 100, 1) : 0)%"></div>
+                </div>
+                <span class="progress-description">
+                    @Model.ActivePositions trong @Model.TotalPositions vị trí
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="info-box">
+            <span class="info-box-icon bg-success"><i class="fas fa-users"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Trung bình ứng viên/vị trí</span>
+                <span class="info-box-number">
+                    @(Model.TotalPositions > 0 ? Math.Round((double)Model.TotalApplications / Model.TotalPositions, 1) : 0)
+                </span>
+                <div class="progress">
+                    <div class="progress-bar bg-success" style="width: 70%"></div>
+                </div>
+                <span class="progress-description">
+                    Tổng @Model.TotalApplications đơn ứng tuyển
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="info-box">
+            <span class="info-box-icon bg-warning"><i class="fas fa-clock"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Vị trí hết hạn</span>
+                <span class="info-box-number">@Model.ExpiredPositions</span>
+                <div class="progress">
+                    <div class="progress-bar bg-warning" style="width: @(Model.TotalPositions > 0 ? Math.Round((double)Model.ExpiredPositions / Model.TotalPositions * 100, 1) : 0)%"></div>
+                </div>
+                <span class="progress-description">
+                    @(Model.TotalPositions > 0 ? Math.Round((double)Model.ExpiredPositions / Model.TotalPositions * 100, 1) : 0)% tổng số vị trí
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Back Button -->
+<div class="row">
+    <div class="col-12 text-center">
+        <a href="@Url.Action("Index", "Positions", new { area = "Admin" })" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại quản lý vị trí
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Position Types Pie Chart
+            @if (Model.PositionsByType != null && Model.PositionsByType.Any())
+            {
+                    <text>
+                    const positionTypesCtx = document.getElementById('positionTypesChart').getContext('2d');
+                    new Chart(positionTypesCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: [@Html.Raw(string.Join(",", Model.PositionsByType.Select(x => $"'{x.Type}'")))],
+                            datasets: [{
+                                data: [@string.Join(",", Model.PositionsByType.Select(x => x.Count))],
+                                backgroundColor: [
+                                    '#FF6384',
+                                    '#36A2EB',
+                                    '#FFCE56',
+                                    '#FF9F40',
+                                    '#4BC0C0',
+                                    '#9966FF',
+                                    '#FF6384',
+                                    '#C9CBCF'
+                                ],
+                                borderWidth: 2,
+                                borderColor: '#fff'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        padding: 20,
+                                        usePointStyle: true
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    </text>
+            }
+
+            // Top Companies Bar Chart
+            @if (Model.TopCompaniesByPositions != null && Model.TopCompaniesByPositions.Any())
+            {
+                    <text>
+                    const topCompaniesCtx = document.getElementById('topCompaniesChart').getContext('2d');
+                    new Chart(topCompaniesCtx, {
+                        type: 'horizontalBar',
+                        data: {
+                            labels: [@Html.Raw(string.Join(",", Model.TopCompaniesByPositions.Select(x => $"'{x.CompanyName}'")))],
+                            datasets: [
+                                {
+                                    label: 'Tổng vị trí',
+                                    data: [@string.Join(",", Model.TopCompaniesByPositions.Select(x => x.TotalPositions))],
+                                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                                    borderColor: 'rgba(54, 162, 235, 1)',
+                                    borderWidth: 1
+                                },
+                                {
+                                    label: 'Vị trí hoạt động',
+                                    data: [@string.Join(",", Model.TopCompaniesByPositions.Select(x => x.ActivePositions))],
+                                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                    borderWidth: 1
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        stepSize: 1
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'top'
+                                }
+                            }
+                        }
+                    });
+                    </text>
+            }
+
+            console.log('Position statistics loaded successfully');
+        });
+    </script>
+}

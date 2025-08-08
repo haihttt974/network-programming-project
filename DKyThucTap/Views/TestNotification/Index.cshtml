@@ -1,0 +1,439 @@
+@{
+    ViewData["Title"] = "Test Notification System";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Test Notification System</h3>
+                    <p class="text-muted mb-0">Test the comprehensive notification system functionality</p>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Create Sample Notifications</h5>
+                            
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-primary" onclick="createSampleNotifications()">
+                                    <i class="fas fa-plus me-1"></i>Create All Sample Notifications
+                                </button>
+                                <small class="form-text text-muted">Creates 7 different types of notifications</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-success" onclick="createJobApplicationNotification()">
+                                    <i class="fas fa-briefcase me-1"></i>Job Application Notification
+                                </button>
+                                <small class="form-text text-muted">Create a job application notification</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-info" onclick="createJobStatusUpdate()">
+                                    <i class="fas fa-clipboard-check me-1"></i>Job Status Update
+                                </button>
+                                <small class="form-text text-muted">Create a job status update notification</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-warning" onclick="createSystemAnnouncement()">
+                                    <i class="fas fa-bullhorn me-1"></i>System Announcement
+                                </button>
+                                <small class="form-text text-muted">Create a system announcement</small>
+                            </div>
+
+                            @if (User.HasClaim("Permission", "manage_users"))
+                            {
+                                <div class="mb-3">
+                                    <button type="button" class="btn btn-danger" onclick="broadcastToAll()">
+                                        <i class="fas fa-broadcast-tower me-1"></i>Broadcast to All Users
+                                    </button>
+                                    <small class="form-text text-muted">Send notification to all users (Admin only)</small>
+                                </div>
+                            }
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-secondary" onclick="clearAllNotifications()">
+                                    <i class="fas fa-trash me-1"></i>Clear All Notifications
+                                </button>
+                                <small class="form-text text-muted">Delete all your notifications</small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h5>Test Results</h5>
+                            
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <div class="card bg-primary text-white">
+                                        <div class="card-body text-center">
+                                            <h4 class="mb-0" id="notification-count">?</h4>
+                                            <p class="mb-0">Total Notifications</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="card bg-danger text-white">
+                                        <div class="card-body text-center">
+                                            <h4 class="mb-0" id="unread-count">?</h4>
+                                            <p class="mb-0">Unread Count</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <h6>Notification Bell Status</h6>
+                                <div id="bell-status" class="bg-light p-3 rounded">
+                                    <small class="text-muted">Check the notification bell in the header</small>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <h6>SignalR Connection Status</h6>
+                                <div id="signalr-status" class="bg-light p-3 rounded">
+                                    <small class="text-muted">SignalR status will appear here</small>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <h6>Test Log</h6>
+                                <div id="test-log" class="bg-light p-3 rounded" style="height: 200px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+                                    <p class="text-muted mb-0">Test results will appear here...</p>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-outline-primary" onclick="refreshStatus()">
+                                    <i class="fas fa-sync-alt me-1"></i>Refresh Status
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="clearLog()">
+                                    <i class="fas fa-trash me-1"></i>Clear Log
+                                </button>
+                            </div>
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-outline-info" onclick="testSignalRConnection()">
+                                    <i class="fas fa-wifi me-1"></i>Test SignalR
+                                </button>
+                                <button type="button" class="btn btn-outline-warning" onclick="reconnectSignalR()">
+                                    <i class="fas fa-plug me-1"></i>Reconnect SignalR
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-info-circle me-2"></i>How to Test:</h6>
+                                <ol class="mb-0">
+                                    <li>Click "Create All Sample Notifications" to generate test notifications</li>
+                                    <li>Check the notification bell in the header - it should show a red badge with count</li>
+                                    <li>Click on the notification bell to see the dropdown with notifications</li>
+                                    <li>Test marking notifications as read and deleting them</li>
+                                    <li>Visit the full notifications page by clicking "Xem tất cả" in the dropdown</li>
+                                    <li>Test the real-time updates by creating notifications in multiple tabs</li>
+                                    <li>Watch for toast notifications that appear automatically when new notifications are created</li>
+                                    <li>Check SignalR connection status and test reconnection if needed</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let statusUpdateInterval = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    refreshStatus();
+    startStatusMonitoring();
+
+    // Listen for real-time notification events
+    window.addEventListener('newNotification', function(event) {
+        const notification = event.detail;
+        logMessage(`🔔 Real-time notification received: ${notification.title}`, 'success');
+        logMessage(`Message: ${notification.message}`, 'info');
+        refreshStatus(); // Update counts
+    });
+
+    window.addEventListener('systemNotification', function(event) {
+        const notification = event.detail;
+        logMessage(`📢 System notification received: ${notification.title}`, 'success');
+        logMessage(`Message: ${notification.message}`, 'info');
+        refreshStatus(); // Update counts
+    });
+});
+
+function logMessage(message, type = 'info') {
+    const log = document.getElementById('test-log');
+    const timestamp = new Date().toLocaleTimeString();
+    const entry = document.createElement('div');
+    entry.className = `mb-1 ${type === 'error' ? 'text-danger' : type === 'success' ? 'text-success' : 'text-dark'}`;
+    entry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+    log.appendChild(entry);
+    log.scrollTop = log.scrollHeight;
+}
+
+function clearLog() {
+    document.getElementById('test-log').innerHTML = '<p class="text-muted mb-0">Test results cleared...</p>';
+}
+
+async function createSampleNotifications() {
+    logMessage('Creating sample notifications...', 'info');
+    
+    try {
+        const response = await fetch('/Test/Notification/CreateSample', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            logMessage(`✓ ${data.message}`, 'success');
+            await refreshStatus();
+            
+            // Trigger notification manager update
+            if (window.notificationManager) {
+                await window.notificationManager.updateNotificationCount();
+            }
+        } else {
+            logMessage(`✗ Error: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        logMessage(`✗ Failed to create notifications: ${error.message}`, 'error');
+    }
+}
+
+async function createJobApplicationNotification() {
+    logMessage('Creating job application notification...', 'info');
+    
+    try {
+        const response = await fetch('/Test/Notification/CreateJobApplication', {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            logMessage(`✓ ${data.message}`, 'success');
+            await refreshStatus();
+            
+            if (window.notificationManager) {
+                await window.notificationManager.updateNotificationCount();
+            }
+        } else {
+            logMessage(`✗ Error: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        logMessage(`✗ Failed: ${error.message}`, 'error');
+    }
+}
+
+async function createJobStatusUpdate() {
+    logMessage('Creating job status update...', 'info');
+    
+    try {
+        const response = await fetch('/Test/Notification/CreateJobStatusUpdate', {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            logMessage(`✓ ${data.message}`, 'success');
+            await refreshStatus();
+            
+            if (window.notificationManager) {
+                await window.notificationManager.updateNotificationCount();
+            }
+        } else {
+            logMessage(`✗ Error: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        logMessage(`✗ Failed: ${error.message}`, 'error');
+    }
+}
+
+async function createSystemAnnouncement() {
+    logMessage('Creating system announcement...', 'info');
+    
+    try {
+        const response = await fetch('/Test/Notification/CreateSystemAnnouncement', {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            logMessage(`✓ ${data.message}`, 'success');
+            await refreshStatus();
+            
+            if (window.notificationManager) {
+                await window.notificationManager.updateNotificationCount();
+            }
+        } else {
+            logMessage(`✗ Error: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        logMessage(`✗ Failed: ${error.message}`, 'error');
+    }
+}
+
+async function broadcastToAll() {
+    if (!confirm('Send notification to ALL users in the system?')) {
+        return;
+    }
+    
+    logMessage('Broadcasting to all users...', 'info');
+    
+    try {
+        const response = await fetch('/Test/Notification/BroadcastToAll', {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            logMessage(`✓ ${data.message}`, 'success');
+        } else {
+            logMessage(`✗ Error: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        logMessage(`✗ Failed: ${error.message}`, 'error');
+    }
+}
+
+async function clearAllNotifications() {
+    if (!confirm('Delete ALL your notifications?')) {
+        return;
+    }
+    
+    logMessage('Clearing all notifications...', 'info');
+    
+    try {
+        const response = await fetch('/Test/Notification/ClearAll', {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            logMessage(`✓ ${data.message}`, 'success');
+            await refreshStatus();
+            
+            if (window.notificationManager) {
+                await window.notificationManager.updateNotificationCount();
+            }
+        } else {
+            logMessage(`✗ Error: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        logMessage(`✗ Failed: ${error.message}`, 'error');
+    }
+}
+
+async function refreshStatus() {
+    try {
+        const response = await fetch('/api/Notification/summary');
+        if (response.ok) {
+            const data = await response.json();
+            
+            document.getElementById('notification-count').textContent = data.totalCount;
+            document.getElementById('unread-count').textContent = data.unreadCount;
+            
+            // Update bell status
+            const bellBadge = document.getElementById('notification-badge');
+            const bellStatus = document.getElementById('bell-status');
+            
+            if (bellBadge && bellStatus) {
+                const isVisible = bellBadge.style.display !== 'none';
+                const badgeText = bellBadge.textContent;
+                
+                bellStatus.innerHTML = `
+                    <strong>Bell Badge:</strong> ${isVisible ? `Visible (${badgeText})` : 'Hidden'}<br>
+                    <strong>Manager Status:</strong> ${window.notificationManager ? 'Active' : 'Inactive'}
+                `;
+            }
+
+            // Update SignalR status
+            const signalrStatus = document.getElementById('signalr-status');
+            if (signalrStatus && window.notificationManager) {
+                const status = window.notificationManager.getStatus();
+                signalrStatus.innerHTML = `
+                    <strong>SignalR Connected:</strong> ${status.signalRConnected ? 'Yes' : 'No'}<br>
+                    <strong>Connection State:</strong> ${status.signalRState}<br>
+                    <strong>Real-time Enabled:</strong> ${status.signalRConnected ? 'Yes' : 'No (Fallback to polling)'}
+                `;
+            }
+        }
+    } catch (error) {
+        logMessage(`Error refreshing status: ${error.message}`, 'error');
+    }
+}
+
+function startStatusMonitoring() {
+    refreshStatus();
+    statusUpdateInterval = setInterval(refreshStatus, 10000); // Update every 10 seconds
+}
+
+function testSignalRConnection() {
+    logMessage('Testing SignalR connection...', 'info');
+
+    if (window.notificationManager) {
+        const status = window.notificationManager.getStatus();
+
+        if (status.signalRConnected) {
+            logMessage('✓ SignalR is connected and working', 'success');
+            logMessage(`Connection state: ${status.signalRState}`, 'info');
+        } else {
+            logMessage('✗ SignalR is not connected', 'error');
+            logMessage(`Connection state: ${status.signalRState}`, 'info');
+            logMessage('System will fallback to polling for updates', 'info');
+        }
+    } else {
+        logMessage('✗ NotificationManager not available', 'error');
+    }
+}
+
+async function reconnectSignalR() {
+    logMessage('Attempting to reconnect SignalR...', 'info');
+
+    if (window.notificationManager && typeof window.notificationManager.reconnectSignalR === 'function') {
+        try {
+            const success = await window.notificationManager.reconnectSignalR();
+
+            if (success) {
+                logMessage('✓ SignalR reconnected successfully', 'success');
+                await refreshStatus();
+            } else {
+                logMessage('✗ Failed to reconnect SignalR', 'error');
+            }
+        } catch (error) {
+            logMessage(`✗ SignalR reconnection error: ${error.message}`, 'error');
+        }
+    } else {
+        logMessage('✗ Reconnect function not available', 'error');
+    }
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (statusUpdateInterval) {
+        clearInterval(statusUpdateInterval);
+    }
+});
+</script>
+
+@Html.AntiForgeryToken()
+}

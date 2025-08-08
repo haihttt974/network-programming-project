@@ -1,0 +1,293 @@
+﻿@model DKyThucTap.Areas.Admin.Controllers.DashboardViewModel
+@{
+    Layout = "~/Views/Shared/_Layout_Admin.cshtml";
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="container-fluid">
+    <!-- Welcome Section -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Chào mừng, @User.Identity.Name!</h1>
+        <span class="text-muted">Cập nhật lần cuối: @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</span>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Tổng người dùng
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalUsers</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Tổng công ty
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalCompanies</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-building fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Đánh giá mới (30 ngày)
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.NewReviews</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-star fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Báo cáo vi phạm
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.ViolationReports</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts and Management Sections -->
+    <div class="row">
+        <!-- Chart Section -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Thống kê người dùng mới (6 tháng gần nhất)</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="userGrowthChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Hành động nhanh</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <a href="@Url.Action("Index", "Users", new { area = "Admin" })" class="btn btn-primary btn-block">
+                            <i class="fas fa-users mr-2"></i>Quản lý người dùng
+                        </a>
+                    </div>
+                    <div class="mb-3">
+                        <a href="@Url.Action("Index", "Companies", new { area = "Admin" })" class="btn btn-success btn-block">
+                            <i class="fas fa-building mr-2"></i>Quản lý công ty
+                        </a>
+                    </div>
+                    <div class="mb-3">
+                        <a href="@Url.Action("ViolationReports", "Companies", new { area = "Admin" })" class="btn btn-warning btn-block">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>Báo cáo vi phạm
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Management Sections -->
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quản lý hệ thống</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <a href="@Url.Action("Index", "Users", new { area = "Admin" })" class="btn btn-info btn-block">
+                            <i class="fas fa-user-check mr-2"></i>Duyệt/Khóa tài khoản
+                        </a>
+                    </div>
+                    <div>
+                        <a href="@Url.Action("Index", "Companies", new { area = "Admin" })" class="btn btn-secondary btn-block">
+                            <i class="fas fa-chart-line mr-2"></i>Xem thống kê công ty
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quản lý nội dung</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <a href="@Url.Action("ViolationReports", "Companies", new { area = "Admin" })" class="btn btn-danger btn-block">
+                            <i class="fas fa-ban mr-2"></i>Xử lý vi phạm
+                        </a>
+                    </div>
+                    <div>
+                        <a href="@Url.Action("Index", "Companies", new { area = "Admin" })" class="btn btn-warning btn-block">
+                            <i class="fas fa-building mr-2"></i>Quản lý công ty
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <style>
+        .card {
+            transition: transform 0.2s;
+        }
+
+            .card:hover {
+                transform: translateY(-5px);
+            }
+
+        .btn-block {
+            transition: all 0.3s ease;
+        }
+
+            .btn-block:hover {
+                opacity: 0.9;
+                transform: scale(1.02);
+            }
+
+        .border-left-primary {
+            border-left: 4px solid #4e73df !important;
+        }
+
+        .border-left-success {
+            border-left: 4px solid #1cc88a !important;
+        }
+
+        .border-left-info {
+            border-left: 4px solid #36b9cc !important;
+        }
+
+        .border-left-warning {
+            border-left: 4px solid #f6c23e !important;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Chart.js configuration
+            const ctx = document.getElementById('userGrowthChart').getContext('2d');
+
+            // Prepare chart data
+            const chartLabels = [@Html.Raw(string.Join(",", Model.UserGrowthData.Select(d => $"'{d.Month:00}/{d.Year}'")))];
+            const chartData = [@string.Join(",", Model.UserGrowthData.Select(d => d.Count))];
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        label: 'Người dùng mới',
+                        data: chartData,
+                        borderColor: '#4e73df',
+                        backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#4e73df',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Tăng trưởng người dùng theo tháng',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            },
+                            padding: 20
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            },
+                            ticks: {
+                                stepSize: 1
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+
+            // Button hover effects
+            $('.btn-block').hover(
+                function () { $(this).addClass('shadow-sm'); },
+                function () { $(this).removeClass('shadow-sm'); }
+            );
+
+            console.log('Admin dashboard loaded successfully');
+        });
+    </script>
+}

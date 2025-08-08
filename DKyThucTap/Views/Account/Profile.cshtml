@@ -1,0 +1,112 @@
+@model DKyThucTap.Models.DTOs.UpdateProfileDto
+@{
+    ViewData["Title"] = "Chỉnh sửa thông tin";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-user-edit me-2"></i>Chỉnh sửa thông tin cá nhân
+                </h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="Profile" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="row">
+                        <!-- Avatar -->
+                        <div class="col-md-4 text-center mb-3">
+                            <img id="avatarPreview"
+                                 src="@(!string.IsNullOrEmpty(Model.ProfilePictureUrl) ? Model.ProfilePictureUrl : "/images/default-avatar.png")"
+                                 class="rounded-circle border"
+                                 width="150" height="150"
+                                 style="object-fit: cover;" />
+
+                            <div class="mt-2">
+                                <input type="file" class="form-control" name="ProfileImage" id="ProfileImage" accept="image/*" />
+                                <small class="text-muted">Chọn ảnh đại diện (jpg/png)</small>
+                            </div>
+                        </div>
+
+                        <!-- Thông tin cá nhân -->
+                        <div class="col-md-8">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="FirstName" class="form-label">
+                                        <i class="fas fa-user me-1"></i>Tên <span class="text-danger">*</span>
+                                    </label>
+                                    <input asp-for="FirstName" class="form-control" placeholder="Nhập tên của bạn" />
+                                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="LastName" class="form-label">
+                                        <i class="fas fa-user me-1"></i>Họ <span class="text-danger">*</span>
+                                    </label>
+                                    <input asp-for="LastName" class="form-control" placeholder="Nhập họ của bạn" />
+                                    <span asp-validation-for="LastName" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Phone" class="form-label">
+                                    <i class="fas fa-phone me-1"></i>Số điện thoại
+                                </label>
+                                <input asp-for="Phone" class="form-control" placeholder="Nhập số điện thoại" />
+                                <span asp-validation-for="Phone" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Address" class="form-label">
+                                    <i class="fas fa-map-marker-alt me-1"></i>Địa chỉ
+                                </label>
+                                <textarea asp-for="Address" class="form-control" rows="3" placeholder="Nhập địa chỉ của bạn"></textarea>
+                                <span asp-validation-for="Address" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Bio" class="form-label">
+                                    <i class="fas fa-info-circle me-1"></i>Giới thiệu bản thân
+                                </label>
+                                <textarea asp-for="Bio" class="form-control" rows="4" placeholder="Viết một vài dòng giới thiệu về bản thân..."></textarea>
+                                <span asp-validation-for="Bio" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="CvUrl" class="form-label">
+                                    <i class="fas fa-file-pdf me-1"></i>URL CV
+                                </label>
+                                <input asp-for="CvUrl" class="form-control" placeholder="https://example.com/cv.pdf" />
+                                <span asp-validation-for="CvUrl" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-3">
+                        <a asp-action="Dashboard" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Quay lại
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Lưu thay đổi
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        document.getElementById('ProfileImage').addEventListener('change', function (event) {
+            const [file] = event.target.files;
+            if (file) {
+                document.getElementById('avatarPreview').src = URL.createObjectURL(file);
+            }
+        });
+    </script>
+}

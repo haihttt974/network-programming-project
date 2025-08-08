@@ -1,0 +1,734 @@
+@model DKyThucTap.Models.DTOs.UserProfileDto
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var permissions = ViewBag.Permissions as Dictionary<string, bool>;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+            </h2>
+            <div>
+                <span class="badge bg-primary fs-6">@Model.RoleName</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row">
+    <!-- User Info Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-user me-2"></i>Thông tin cá nhân
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    @if (!string.IsNullOrEmpty(Model.ProfilePictureUrl))
+                    {
+                        <img src="@Model.ProfilePictureUrl" alt="Avatar" class="rounded-circle" width="80" height="80">
+                    }
+                    else
+                    {
+                        <div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <i class="fas fa-user text-white fa-2x"></i>
+                        </div>
+                    }
+                </div>
+                
+                <h6 class="text-center">@Model.FirstName @Model.LastName</h6>
+                <p class="text-muted text-center mb-3">@Model.Email</p>
+                
+                <div class="mb-2">
+                    <small class="text-muted">Vai trò:</small>
+                    <span class="badge bg-info ms-2">@Model.RoleName</span>
+                </div>
+                
+                @if (!string.IsNullOrEmpty(Model.Phone))
+                {
+                    <div class="mb-2">
+                        <small class="text-muted">Điện thoại:</small>
+                        <span class="ms-2">@Model.Phone</span>
+                    </div>
+                }
+                
+                <div class="mb-2">
+                    <small class="text-muted">Tham gia:</small>
+                    <span class="ms-2">@Model.CreatedAt?.ToString("dd/MM/yyyy")</span>
+                </div>
+                
+                @if (Model.LastLogin.HasValue)
+                {
+                    <div class="mb-3">
+                        <small class="text-muted">Đăng nhập cuối:</small>
+                        <span class="ms-2">@Model.LastLogin?.ToString("dd/MM/yyyy HH:mm")</span>
+                    </div>
+                }
+                
+                <div class="d-grid">
+                    <a asp-action="Profile" class="btn btn-outline-primary">
+                        <i class="fas fa-edit me-1"></i>Chỉnh sửa thông tin
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions Card -->
+    <div class="col-md-8 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>Thao tác nhanh
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    @if (permissions != null && permissions.ContainsKey("view_positions") && permissions["view_positions"])
+                    {
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-primary">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-briefcase text-primary fa-2x mb-2"></i>
+                                    <h6>Xem việc làm</h6>
+                                    <p class="text-muted small">Tìm kiếm cơ hội nghề nghiệp</p>
+                                    <a href="#" class="btn btn-primary btn-sm">Xem ngay</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (permissions != null && permissions.ContainsKey("apply_position") && permissions["apply_position"])
+                    {
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-info">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-paper-plane text-info fa-2x mb-2"></i>
+                                    <h6>Đơn ứng tuyển</h6>
+                                    <p class="text-muted small">Quản lý đơn ứng tuyển của bạn</p>
+                                    <a href="#" class="btn btn-info btn-sm">Xem đơn</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (permissions != null && permissions.ContainsKey("create_position") && permissions["create_position"])
+                    {
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-warning">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-plus-circle text-warning fa-2x mb-2"></i>
+                                    <h6>Đăng tin tuyển dụng</h6>
+                                    <p class="text-muted small">Tạo tin tuyển dụng mới</p>
+                                    <a href="@Url.Action("Create", "Position")" class="btn btn-warning btn-sm">Đăng tin</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-info">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-briefcase text-info fa-2x mb-2"></i>
+                                    <h6>Vị trí của tôi</h6>
+                                    <p class="text-muted small">Quản lý vị trí tuyển dụng</p>
+                                    <a href="@Url.Action("My", "Position")" class="btn btn-info btn-sm">Xem vị trí</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (permissions != null && permissions.ContainsKey("manage_applications") && permissions["manage_applications"])
+                    {
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-success">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-users text-success fa-2x mb-2"></i>
+                                    <h6>Quản lý ứng viên</h6>
+                                    <p class="text-muted small">Xem và quản lý ứng viên</p>
+                                    <a href="@Url.Action("Applications", "Position")" class="btn btn-success btn-sm">Quản lý</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (permissions != null && permissions.ContainsKey("create_company") && permissions["create_company"])
+                    {
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-secondary">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-building text-secondary fa-2x mb-2"></i>
+                                    <h6>Quản lý công ty</h6>
+                                    <p class="text-muted small">Tạo và quản lý thông tin công ty</p>
+                                    <a href="#" class="btn btn-secondary btn-sm">Quản lý</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (permissions != null && permissions.ContainsKey("manage_users") && permissions["manage_users"])
+                    {
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-danger">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-user-cog text-danger fa-2x mb-2"></i>
+                                    <h6>Quản lý người dùng</h6>
+                                    <p class="text-muted small">Quản lý tài khoản người dùng</p>
+                                    <a href="#" class="btn btn-danger btn-sm">Quản lý</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (permissions != null && permissions.ContainsKey("send_messages") && permissions["send_messages"])
+                    {
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-dark">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-comments text-dark fa-2x mb-2"></i>
+                                    <h6>Tin nhắn</h6>
+                                    <p class="text-muted small">Gửi và nhận tin nhắn</p>
+                                    <a href="#" class="btn btn-dark btn-sm">Tin nhắn</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Position Statistics for Recruiters -->
+@if (permissions != null && permissions.ContainsKey("create_position") && permissions["create_position"])
+{
+    var positionStats = ViewBag.PositionStatistics as DKyThucTap.Services.PositionStatisticsDto;
+    var userCompanies = ViewBag.UserCompanies as List<DKyThucTap.Models.DTOs.Company.CompanyListDto> ?? new List<DKyThucTap.Models.DTOs.Company.CompanyListDto>();
+    var totalCompanies = ViewBag.TotalCompanies as int? ?? 0;
+
+    if (positionStats != null)
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-bar me-2"></i>Thống kê vị trí tuyển dụng
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card bg-primary text-white h-100">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-briefcase fa-2x mb-2"></i>
+                                        <h3 class="mb-0">@positionStats.TotalPositions</h3>
+                                        <p class="mb-0">Tổng vị trí</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card bg-success text-white h-100">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-check-circle fa-2x mb-2"></i>
+                                        <h3 class="mb-0">@positionStats.ActivePositions</h3>
+                                        <p class="mb-0">Đang tuyển</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card bg-info text-white h-100">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-users fa-2x mb-2"></i>
+                                        <h3 class="mb-0">@positionStats.TotalApplications</h3>
+                                        <p class="mb-0">Tổng ứng viên</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card bg-warning text-white h-100">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-chart-line fa-2x mb-2"></i>
+                                        <h3 class="mb-0">@positionStats.AverageApplicationsPerPosition.ToString("F1")</h3>
+                                        <p class="mb-0">TB ứng viên/vị trí</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (positionStats.ExpiredPositions > 0)
+                        {
+                            <div class="alert alert-warning mt-3">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Lưu ý:</strong> Bạn có @positionStats.ExpiredPositions vị trí đã hết hạn nộp đơn.
+                                <a href="@Url.Action("My", "Position")" class="alert-link">Xem chi tiết</a>
+                            </div>
+                        }
+
+                        <div class="text-center mt-3">
+                            <a href="@Url.Action("My", "Position")" class="btn btn-primary me-2">
+                                <i class="fas fa-list me-1"></i>Quản lý vị trí
+                            </a>
+                            <a href="@Url.Action("Create", "Position")" class="btn btn-success">
+                                <i class="fas fa-plus me-1"></i>Tạo vị trí mới
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Company Statistics -->
+    @if (userCompanies.Any())
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-building me-2"></i>Công ty của tôi
+                        </h5>
+                        <div class="btn-group">
+                            <a href="@Url.Action("My", "Company")" class="btn btn-sm btn-outline-light">
+                                Xem tất cả (@totalCompanies)
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @foreach (var company in userCompanies)
+                            {
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-0 bg-light">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-2">
+                                                @if (!string.IsNullOrEmpty(company.LogoUrl))
+                                                {
+                                                    <img src="@company.LogoUrl" alt="@company.Name"
+                                                         class="me-2" style="width: 30px; height: 30px; object-fit: cover; border-radius: 4px;">
+                                                }
+                                                else
+                                                {
+                                                    <div class="me-2" style="width: 30px; height: 30px; background-color: #dee2e6; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                                        <i class="fas fa-building text-muted"></i>
+                                                    </div>
+                                                }
+                                                <div>
+                                                    <h6 class="mb-0">
+                                                        <a href="@Url.Action("Details", "Company", new { id = company.CompanyId })"
+                                                           class="text-decoration-none">
+                                                            @company.Name
+                                                        </a>
+                                                    </h6>
+                                                    <small class="text-muted">@company.UserRole</small>
+                                                </div>
+                                            </div>
+                                            <div class="row text-center">
+                                                <div class="col-4">
+                                                    <small class="text-muted d-block">Vị trí</small>
+                                                    <strong class="text-primary">@company.PositionCount</strong>
+                                                </div>
+                                                <div class="col-4">
+                                                    <small class="text-muted d-block">Đang tuyển</small>
+                                                    <strong class="text-success">@company.ActivePositionCount</strong>
+                                                </div>
+                                                <div class="col-4">
+                                                    <small class="text-muted d-block">Ứng viên</small>
+                                                    <strong class="text-info">@company.TotalApplications</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        @if (totalCompanies == 0)
+                        {
+                            <div class="text-center py-3">
+                                <i class="fas fa-building fa-2x text-muted mb-2"></i>
+                                <p class="text-muted mb-2">Bạn chưa tham gia công ty nào</p>
+                                <a href="@Url.Action("Create", "Company")" class="btn btn-success btn-sm me-2">
+                                    <i class="fas fa-plus me-1"></i>Tạo công ty
+                                </a>
+                                <a href="@Url.Action("Index", "Company")" class="btn btn-outline-success btn-sm">
+                                    <i class="fas fa-search me-1"></i>Tìm công ty
+                                </a>
+                            </div>
+                        }
+                        else
+                        {
+                            <!-- Quick Actions for Company Owners -->
+                            <div class="mt-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0">Thao tác nhanh</h6>
+                                </div>
+                                <div class="row">
+                                    @foreach (var company in userCompanies.Where(c => c.UserRole == "Owner"))
+                                    {
+                                        <div class="col-md-6 mb-2">
+                                            <div class="d-flex justify-content-between align-items-center p-2 bg-light rounded">
+                                                <span class="small">@company.Name</span>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="@Url.Action("Recruiters", "Company", new { id = company.CompanyId })"
+                                                       class="btn btn-outline-primary btn-sm" title="Quản lý nhân viên">
+                                                        <i class="fas fa-users"></i>
+                                                    </a>
+                                                    <a href="@Url.Action("Create", "Position", new { companyId = company.CompanyId })"
+                                                       class="btn btn-outline-success btn-sm" title="Tạo vị trí mới">
+                                                        <i class="fas fa-plus"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Pending Recruiter Requests for Company Owners -->
+    @if (permissions != null && permissions.ContainsKey("create_position") && permissions["create_position"])
+    {
+        var pendingRecruiterRequests = ViewBag.PendingRecruiterRequests as List<DKyThucTap.Models.DTOs.Company.CompanyRecruiterListDto> ?? new List<DKyThucTap.Models.DTOs.Company.CompanyRecruiterListDto>();
+        if (pendingRecruiterRequests.Any())
+        {
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-warning">
+                        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-clock me-2"></i>Yêu cầu tham gia công ty chờ phê duyệt
+                            </h5>
+                            <span class="badge bg-dark">@pendingRecruiterRequests.Count</span>
+                        </div>
+                        <div class="card-body">
+                            @foreach (var request in pendingRecruiterRequests)
+                            {
+                                <div class="d-flex justify-content-between align-items-center py-2 @(request != pendingRecruiterRequests.Last() ? "border-bottom" : "")">
+                                    <div class="d-flex align-items-center">
+                                        @if (!string.IsNullOrEmpty(request.UserProfilePicture))
+                                        {
+                                            <img src="@request.UserProfilePicture" alt="@request.UserName"
+                                                 class="rounded-circle me-3" style="width: 32px; height: 32px; object-fit: cover;">
+                                        }
+                                        else
+                                        {
+                                            <div class="rounded-circle me-3 bg-light d-flex align-items-center justify-content-center"
+                                                 style="width: 32px; height: 32px;">
+                                                <i class="fas fa-user text-muted"></i>
+                                            </div>
+                                        }
+                                        <div>
+                                            <strong>@request.UserName</strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                @if (request.Status == "pending")
+                                                {
+                                                    <span>muốn tham gia <strong>@request.CompanyName</strong></span>
+                                                }
+                                                else if (request.Status == "invited")
+                                                {
+                                                    <span>được mời tham gia <strong>@request.CompanyName</strong></span>
+                                                    @if (!string.IsNullOrEmpty(request.InvitedByName))
+                                                    {
+                                                        <span> bởi <strong>@request.InvitedByName</strong></span>
+                                                    }
+                                                }
+                                                @if (!string.IsNullOrEmpty(request.RequestMessage))
+                                                {
+                                                    <br>
+                                                    <span class="text-truncate" style="max-width: 300px;" title="@request.RequestMessage">
+                                                        "@request.RequestMessage"
+                                                    </span>
+                                                }
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="btn-group btn-group-sm">
+                                        @if (request.Status == "pending")
+                                        {
+                                            <!-- Company owner can approve/reject user requests -->
+                                            <button type="button" class="btn btn-success"
+                                                    onclick="quickRespondToRequest(@request.CompanyId, @request.UserId, true, '@request.UserName')"
+                                                    title="Phê duyệt yêu cầu">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-danger"
+                                                    onclick="quickRespondToRequest(@request.CompanyId, @request.UserId, false, '@request.UserName')"
+                                                    title="Từ chối yêu cầu">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        }
+                                        else if (request.Status == "invited")
+                                        {
+                                            <!-- Company owner can only cancel invitations -->
+                                            <button type="button" class="btn btn-warning"
+                                                    onclick="cancelInvitation(@request.CompanyId, @request.UserId, '@request.UserName')"
+                                                    title="Hủy lời mời">
+                                                <i class="fas fa-ban"></i>
+                                            </button>
+                                        }
+                                        <a href="@Url.Action("Recruiters", "Company", new { id = request.CompanyId })"
+                                           class="btn btn-outline-primary" title="Xem chi tiết">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            }
+                            @if (pendingRecruiterRequests.Count > 5)
+                            {
+                                <div class="text-center mt-3">
+                                    <small class="text-muted">và @(pendingRecruiterRequests.Count - 5) yêu cầu khác...</small>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+
+    <!-- User's Pending Company Requests -->
+    @if (permissions != null && permissions.ContainsKey("create_position") && permissions["create_position"])
+    {
+        var userCompanyRequests = ViewBag.UserCompanyRequests as List<DKyThucTap.Models.DTOs.Company.CompanyRecruiterListDto> ?? new List<DKyThucTap.Models.DTOs.Company.CompanyRecruiterListDto>();
+        if (userCompanyRequests.Any())
+        {
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-info">
+                        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-hourglass-half me-2"></i>Yêu cầu tham gia công ty của bạn
+                            </h5>
+                            <span class="badge bg-light text-dark">@userCompanyRequests.Count</span>
+                        </div>
+                        <div class="card-body">
+                            @foreach (var request in userCompanyRequests)
+                            {
+                                <div class="d-flex justify-content-between align-items-center py-2 @(request != userCompanyRequests.Last() ? "border-bottom" : "")">
+                                    <div class="d-flex align-items-center">
+                                        @if (!string.IsNullOrEmpty(request.CompanyLogoUrl))
+                                        {
+                                            <img src="@request.CompanyLogoUrl" alt="@request.CompanyName"
+                                                 class="me-3" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px;">
+                                        }
+                                        else
+                                        {
+                                            <div class="me-3 bg-light d-flex align-items-center justify-content-center"
+                                                 style="width: 32px; height: 32px; border-radius: 4px;">
+                                                <i class="fas fa-building text-muted"></i>
+                                            </div>
+                                        }
+                                        <div>
+                                            <strong>@request.CompanyName</strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                Trạng thái:
+                                                <span class="badge @(request.Status == "invited" ? "bg-info" : "bg-secondary")">
+                                                    @(request.Status == "invited" ? "Được mời" : "Chờ phê duyệt")
+                                                </span>
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="btn-group btn-group-sm">
+                                        @if (request.Status == "invited")
+                                        {
+                                            <button type="button" class="btn btn-success"
+                                                    onclick="quickRespondToInvitation(@request.CompanyId, true, '@request.CompanyName')"
+                                                    title="Chấp nhận">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-danger"
+                                                    onclick="quickRespondToInvitation(@request.CompanyId, false, '@request.CompanyName')"
+                                                    title="Từ chối">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        }
+                                        <a href="@Url.Action("Details", "Company", new { id = request.CompanyId })"
+                                           class="btn btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+}
+
+<!-- Recent Activity for other users -->
+@if (permissions == null || !permissions.ContainsKey("create_position") || !permissions["create_position"])
+{
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>Hoạt động gần đây
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted text-center py-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Tính năng này sẽ được phát triển trong tương lai để hiển thị hoạt động gần đây của bạn.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+<script>
+// Quick response to recruiter requests
+function quickRespondToRequest(companyId, userId, isApproved, userName) {
+    const action = isApproved ? 'phê duyệt' : 'từ chối';
+    if (confirm(`Bạn có chắc chắn muốn ${action} yêu cầu của ${userName}?`)) {
+        // Prepare form data
+        const formData = new FormData();
+        formData.append('CompanyId', companyId);
+        formData.append('UserId', userId);
+        formData.append('IsApproved', isApproved);
+        formData.append('ResponseMessage', '');
+        formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+
+        // Submit via AJAX
+        fetch('@Url.Action("RespondToRequest", "Company")', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showDashboardNotification('success', data.message);
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showDashboardNotification('error', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showDashboardNotification('error', 'Có lỗi xảy ra khi xử lý yêu cầu');
+        });
+    }
+}
+
+// Quick respond to invitation function
+function quickRespondToInvitation(companyId, accept, companyName) {
+    const action = accept ? 'chấp nhận' : 'từ chối';
+    if (confirm(`Bạn có chắc chắn muốn ${action} lời mời từ công ty "${companyName}"?`)) {
+        const formData = new FormData();
+        formData.append('companyId', companyId);
+        formData.append('accept', accept);
+        formData.append('responseMessage', '');
+        formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+
+        fetch('@Url.Action("RespondToInvitation", "Company")', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showDashboardNotification('success', data.message);
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showDashboardNotification('error', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showDashboardNotification('error', `Có lỗi xảy ra khi ${action} lời mời`);
+        });
+    }
+}
+
+// Cancel invitation function
+function cancelInvitation(companyId, userId, userName) {
+    if (confirm(`Bạn có chắc chắn muốn hủy lời mời gửi cho ${userName}?`)) {
+        const formData = new FormData();
+        formData.append('companyId', companyId);
+        formData.append('recruiterId', userId);
+        formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+
+        fetch('@Url.Action("RemoveRecruiter", "Company")', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showDashboardNotification('success', 'Đã hủy lời mời thành công');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showDashboardNotification('error', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showDashboardNotification('error', 'Có lỗi xảy ra khi hủy lời mời');
+        });
+    }
+}
+
+// Dashboard notification system
+function showDashboardNotification(type, message) {
+    // Remove existing notifications
+    const existingNotifications = document.querySelectorAll('.dashboard-notification');
+    existingNotifications.forEach(notification => notification.remove());
+
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show dashboard-notification`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    `;
+
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    // Add to page
+    document.body.appendChild(notification);
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+</script>
+}
+
+<!-- Add CSRF Token -->
+@Html.AntiForgeryToken()

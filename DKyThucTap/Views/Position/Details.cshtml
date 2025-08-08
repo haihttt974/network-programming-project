@@ -1,0 +1,436 @@
+@model DKyThucTap.Models.DTOs.Position.PositionDetailDto
+@{
+    ViewData["Title"] = Model.Title;
+    var isOwner = User.Identity.IsAuthenticated && 
+                  User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value == Model.CreatedBy?.ToString();
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <h2 class="card-title mb-2">@Model.Title</h2>
+                        <div class="d-flex align-items-center mb-2">
+                            @if (!string.IsNullOrEmpty(Model.CompanyLogoUrl))
+                            {
+                                <img src="@Model.CompanyLogoUrl" alt="@Model.CompanyName" 
+                                     class="me-3" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;">
+                            }
+                            <div>
+                                <h5 class="mb-0">@Model.CompanyName</h5>
+                                @if (!string.IsNullOrEmpty(Model.CompanyIndustry))
+                                {
+                                    <small class="text-muted">@Model.CompanyIndustry</small>
+                                }
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            <span class="badge bg-primary">@Model.PositionType</span>
+                            @if (Model.IsRemote == true)
+                            {
+                                <span class="badge bg-info">Remote</span>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.CategoryName))
+                            {
+                                <span class="badge bg-secondary">@Model.CategoryName</span>
+                            }
+                            <span class="badge @(Model.IsActive == true ? "bg-success" : "bg-warning")">
+                                @(Model.IsActive == true ? "Đang tuyển" : "Tạm dừng")
+                            </span>
+                        </div>
+                    </div>
+                    @if (isOwner)
+                    {
+                        <div class="btn-group">
+                            <a href="@Url.Action("Edit", "Position", new { id = Model.PositionId })" 
+                               class="btn btn-outline-primary">
+                                <i class="fas fa-edit me-1"></i>
+                                Chỉnh sửa
+                            </a>
+                            <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" 
+                                    data-bs-toggle="dropdown">
+                                <span class="visually-hidden">Toggle Dropdown</span>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="@Url.Action("My", "Position")">
+                                        <i class="fas fa-list me-2"></i>Vị trí của tôi
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="@Url.Action("History", "Position", new { id = Model.PositionId })">
+                                        <i class="fas fa-history me-2"></i>Lịch sử thay đổi
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <button class="dropdown-item text-danger" onclick="toggleStatus(@Model.PositionId, @(Model.IsActive != true ? "true" : "false"))">
+                                        <i class="fas fa-@(Model.IsActive == true ? "pause" : "play") me-2"></i>
+                                        @(Model.IsActive == true ? "Tạm dừng" : "Kích hoạt")
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    }
+                    else if (User.Identity.IsAuthenticated)
+                    {
+                        <a asp-controller="Applications" asp-action="Apply" asp-route-positionId="@Model.PositionId" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-1"></i>
+                            Ứng tuyển
+                        </a>
+                    }
+                    else
+                    {
+                        <a href="@Url.Action("Login", "Auth")" class="btn btn-primary">
+                            <i class="fas fa-sign-in-alt me-1"></i>
+                            Đăng nhập để ứng tuyển
+                        </a>
+                    }
+                </div>
+
+                <div class="card-body">
+                    <!-- Basic Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-map-marker-alt text-muted me-2"></i>
+                                <span>@(Model.Location ?? "Không xác định")</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(Model.SalaryRange))
+                            {
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-dollar-sign text-muted me-2"></i>
+                                    <span>@Model.SalaryRange</span>
+                                </div>
+                            }
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-users text-muted me-2"></i>
+                                <span>@Model.ApplicationCount ứng viên đã ứng tuyển</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-calendar text-muted me-2"></i>
+                                <span>Đăng: @Model.CreatedAt?.ToString("dd/MM/yyyy")</span>
+                            </div>
+                            @if (Model.ApplicationDeadline.HasValue)
+                            {
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-clock text-muted me-2"></i>
+                                    <span class="@(Model.IsExpired ? "text-danger" : "")">
+                                        Hạn: @Model.ApplicationDeadline.Value.ToString("dd/MM/yyyy")
+                                        @if (Model.IsExpired)
+                                        {
+                                            <span class="badge bg-danger ms-1">Đã hết hạn</span>
+                                        }
+                                        else if (Model.DaysUntilDeadline <= 7)
+                                        {
+                                            <span class="badge bg-warning ms-1">Còn @Model.DaysUntilDeadline ngày</span>
+                                        }
+                                    </span>
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.CreatedByName))
+                            {
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-user text-muted me-2"></i>
+                                    <span>Đăng bởi: @Model.CreatedByName</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Required Skills -->
+                    @if (Model.RequiredSkills.Any())
+                    {
+                        <div class="mb-4">
+                            <h5 class="mb-3">
+                                <i class="fas fa-tools me-2"></i>
+                                Kỹ năng yêu cầu
+                            </h5>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach (var skill in Model.RequiredSkills)
+                                {
+                                    <span class="badge bg-light text-dark border">
+                                        @skill.SkillName
+                                        @if (!string.IsNullOrEmpty(skill.SkillCategory))
+                                        {
+                                            <small class="text-muted">(@skill.SkillCategory)</small>
+                                        }
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Job Description -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">
+                            <i class="fas fa-file-alt me-2"></i>
+                            Mô tả công việc
+                        </h5>
+                        <div class="job-description">
+                            @Html.Raw(Model.Description.Replace("\n", "<br>"))
+                        </div>
+                    </div>
+
+                    <!-- Company Info -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">
+                            <i class="fas fa-building me-2"></i>
+                            Thông tin công ty
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-8">
+                                @if (!string.IsNullOrEmpty(Model.CompanyDescription))
+                                {
+                                    <p>@Model.CompanyDescription</p>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.CompanyLocation))
+                                {
+                                    <p><strong>Địa chỉ:</strong> @Model.CompanyLocation</p>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.CompanyWebsite))
+                                {
+                                    <p>
+                                        <strong>Website:</strong> 
+                                        <a href="@Model.CompanyWebsite" target="_blank" class="text-decoration-none">
+                                            @Model.CompanyWebsite
+                                            <i class="fas fa-external-link-alt ms-1"></i>
+                                        </a>
+                                    </p>
+                                }
+                            </div>
+                            @if (!string.IsNullOrEmpty(Model.CompanyLogoUrl))
+                            {
+                                <div class="col-md-4 text-center">
+                                    <img src="@Model.CompanyLogoUrl" alt="@Model.CompanyName" 
+                                         class="img-fluid" style="max-width: 150px; border-radius: 8px;">
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Thao tác nhanh</h5>
+                </div>
+                <div class="card-body">
+                    @if (isOwner)
+                    {
+                        <div class="d-grid gap-2">
+                            <a href="@Url.Action("Edit", "Position", new { id = Model.PositionId })" 
+                               class="btn btn-primary">
+                                <i class="fas fa-edit me-1"></i>
+                                Chỉnh sửa vị trí
+                            </a>
+                            <button class="btn btn-outline-info" onclick="viewApplications(@Model.PositionId)">
+                                <i class="fas fa-users me-1"></i>
+                                Xem ứng viên (@Model.ApplicationCount)
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="sharePosition()">
+                                <i class="fas fa-share me-1"></i>
+                                Chia sẻ vị trí
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <div class="d-grid gap-2">
+                                <a asp-controller="Applications" asp-action="Apply" asp-route-positionId="@Model.PositionId" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane me-1"></i>
+                                    Ứng tuyển ngay
+                                </a>
+                                <!-- ✅ Nút mới: Trao đổi với nhà tuyển dụng -->
+                                @if (User.IsInRole("Candidate"))
+                                {
+                                    <a asp-controller="Messages" asp-action="Chat" asp-route-positionId="@Model.PositionId"
+                                       class="btn btn-outline-success">
+                                        <i class="fas fa-comments me-1"></i>
+                                        Trao đổi với nhà tuyển dụng
+                                    </a>
+                                }
+                                <button class="btn btn-outline-secondary" onclick="savePosition(@Model.PositionId)">
+                                    <i class="fas fa-bookmark me-1"></i>
+                                    Lưu vị trí
+                                </button>
+                                <button class="btn btn-outline-info" onclick="sharePosition()">
+                                    <i class="fas fa-share me-1"></i>
+                                    Chia sẻ
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="d-grid gap-2">
+                                <a href="@Url.Action("Login", "Auth")" class="btn btn-primary">
+                                    <i class="fas fa-sign-in-alt me-1"></i>
+                                    Đăng nhập để ứng tuyển
+                                </a>
+                                <button class="btn btn-outline-info" onclick="sharePosition()">
+                                    <i class="fas fa-share me-1"></i>
+                                    Chia sẻ
+                                </button>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            @if (isOwner)
+            {
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Thống kê</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="border-end">
+                                    <h4 class="text-primary mb-0">@Model.ApplicationCount</h4>
+                                    <small class="text-muted">Ứng viên</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="text-info mb-0">
+                                    @if (Model.CreatedAt.HasValue)
+                                    {
+                                        @((DateTime.Now - Model.CreatedAt.Value.DateTime).Days)
+                                    }
+                                    else
+                                    {
+                                        <span>0</span>
+                                    }
+                                </h4>
+                                <small class="text-muted">Ngày đăng</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Recent Applications -->
+            @if (isOwner && Model.RecentApplications.Any())
+            {
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Ứng viên gần đây</h5>
+                    </div>
+                    <div class="card-body">
+                        @foreach (var application in Model.RecentApplications)
+                        {
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="avatar-placeholder me-3">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">@application.ApplicantName</h6>
+                                    <small class="text-muted">
+                                        @application.AppliedAt?.ToString("dd/MM/yyyy HH:mm")
+                                    </small>
+                                </div>
+                                <span class="badge bg-secondary">@application.CurrentStatus</span>
+                            </div>
+                        }
+                        <div class="text-center">
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewApplications(@Model.PositionId)">
+                                Xem tất cả
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+@Html.AntiForgeryToken()
+<script>
+// Toggle position status
+function toggleStatus(positionId, isActive) {
+    if (confirm(`Bạn có chắc chắn muốn ${isActive === 'true' ? 'kích hoạt' : 'tạm dừng'} vị trí này?`)) {
+        fetch(`/Position/UpdateStatus/${positionId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+            },
+            body: `isActive=${isActive}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Lỗi: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Có lỗi xảy ra khi cập nhật trạng thái');
+        });
+    }
+}
+
+// Apply for position
+function applyPosition(positionId) {
+    // Redirect to application form
+    window.location.href = `/Application/Apply/${positionId}`;
+}
+
+// View applications
+function viewApplications(positionId) {
+    window.location.href = `/ApplicationManagement/ByPosition/${positionId}`;
+}
+
+// Save position
+function savePosition(positionId) {
+    // Implement save functionality
+    alert('Tính năng lưu vị trí sẽ được phát triển trong tương lai');
+}
+
+// Share position
+function sharePosition() {
+    if (navigator.share) {
+        navigator.share({
+            title: '@Model.Title',
+            text: 'Vị trí tuyển dụng tại @Model.CompanyName',
+            url: window.location.href
+        });
+    } else {
+        // Fallback: copy to clipboard
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            alert('Đã sao chép link vào clipboard');
+        });
+    }
+}
+</script>
+
+<style>
+.job-description {
+    line-height: 1.6;
+    white-space: pre-line;
+}
+
+.avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+}
+</style>

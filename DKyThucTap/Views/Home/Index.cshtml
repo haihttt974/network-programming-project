@@ -1,0 +1,181 @@
+﻿@{
+    ViewData["Title"] = "Trang chủ";
+}
+
+<!-- Hero Section -->
+<div class="bg-primary text-white py-5 mb-5 rounded">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold mb-3">
+            <i class="fas fa-briefcase me-3"></i>DKyThucTap
+        </h1>
+        <p class="lead mb-4">Nền tảng kết nối ứng viên và nhà tuyển dụng hàng đầu Việt Nam</p>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <p class="mb-4">
+                    Tìm kiếm cơ hội nghề nghiệp lý tưởng hoặc tuyển dụng nhân tài phù hợp cho doanh nghiệp của bạn.
+                    Hàng ngàn việc làm đang chờ đón bạn!
+                </p>
+            </div>
+        </div>
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <a asp-controller="Auth" asp-action="Register" class="btn btn-light btn-lg">
+                <i class="fas fa-user-plus me-2"></i>Đăng ký ngay
+            </a>
+            <a asp-controller="Auth" asp-action="Login" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-sign-in-alt me-2"></i>Đăng nhập
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="row mb-5">
+    <div class="col-12 text-center mb-4">
+        <h2 class="fw-bold">Tại sao chọn DKyThucTap?</h2>
+        <p class="text-muted">Những tính năng nổi bật giúp bạn thành công</p>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                    <i class="fas fa-search fa-lg"></i>
+                </div>
+                <h5 class="card-title">Tìm kiếm thông minh</h5>
+                <p class="card-text text-muted">
+                    Hệ thống tìm kiếm và gợi ý việc làm thông minh dựa trên kỹ năng và kinh nghiệm của bạn.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                    <i class="fas fa-handshake fa-lg"></i>
+                </div>
+                <h5 class="card-title">Kết nối trực tiếp</h5>
+                <p class="card-text text-muted">
+                    Giao tiếp trực tiếp với nhà tuyển dụng thông qua hệ thống tin nhắn tích hợp.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                    <i class="fas fa-chart-line fa-lg"></i>
+                </div>
+                <h5 class="card-title">Theo dõi tiến trình</h5>
+                <p class="card-text text-muted">
+                    Theo dõi trạng thái đơn ứng tuyển và nhận thông báo cập nhật kịp thời.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Role Selection Section -->
+<div class="bg-light py-5 rounded mb-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center mb-4">
+                <h2 class="fw-bold">Bạn là ai?</h2>
+                <p class="text-muted">Chọn vai trò phù hợp để bắt đầu hành trình của bạn</p>
+            </div>
+
+            <div class="col-md-6 mb-4">
+                <div class="card border-primary h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                            <i class="fas fa-user fa-2x"></i>
+                        </div>
+                        <h4 class="card-title text-primary">Ứng viên</h4>
+                        <p class="card-text mb-4">
+                            Tìm kiếm cơ hội nghề nghiệp, ứng tuyển vào các vị trí phù hợp và phát triển sự nghiệp.
+                        </p>
+                        <ul class="list-unstyled text-start mb-4">
+                            <li><i class="fas fa-check text-success me-2"></i>Tìm kiếm việc làm</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Ứng tuyển trực tuyến</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Theo dõi đơn ứng tuyển</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Nhận thông báo việc làm</li>
+                        </ul>
+                        <a asp-controller="Auth" asp-action="Register" class="btn btn-primary">
+                            <i class="fas fa-user-plus me-2"></i>Đăng ký làm ứng viên
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 mb-4">
+                <div class="card border-success h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                            <i class="fas fa-building fa-2x"></i>
+                        </div>
+                        <h4 class="card-title text-success">Nhà tuyển dụng</h4>
+                        <p class="card-text mb-4">
+                            Đăng tin tuyển dụng, tìm kiếm và quản lý ứng viên cho doanh nghiệp của bạn.
+                        </p>
+                        <ul class="list-unstyled text-start mb-4">
+                            <li><i class="fas fa-check text-success me-2"></i>Đăng tin tuyển dụng</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Quản lý ứng viên</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Tìm kiếm hồ sơ</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Quản lý công ty</li>
+                        </ul>
+                        <a asp-controller="Auth" asp-action="Register" class="btn btn-success">
+                            <i class="fas fa-building me-2"></i>Đăng ký tuyển dụng
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Section -->
+<div class="row text-center mb-5">
+    <div class="col-12 mb-4">
+        <h2 class="fw-bold">Thống kê ấn tượng</h2>
+        <p class="text-muted">Những con số chứng minh sự tin tưởng của người dùng</p>
+    </div>
+
+    <div class="col-md-3 col-6 mb-3">
+        <div class="card border-0">
+            <div class="card-body">
+                <h3 class="text-primary fw-bold">10,000+</h3>
+                <p class="text-muted mb-0">Việc làm</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-6 mb-3">
+        <div class="card border-0">
+            <div class="card-body">
+                <h3 class="text-success fw-bold">5,000+</h3>
+                <p class="text-muted mb-0">Ứng viên</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-6 mb-3">
+        <div class="card border-0">
+            <div class="card-body">
+                <h3 class="text-info fw-bold">1,000+</h3>
+                <p class="text-muted mb-0">Công ty</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-6 mb-3">
+        <div class="card border-0">
+            <div class="card-body">
+                <h3 class="text-warning fw-bold">95%</h3>
+                <p class="text-muted mb-0">Hài lòng</p>
+            </div>
+        </div>
+    </div>
+</div>

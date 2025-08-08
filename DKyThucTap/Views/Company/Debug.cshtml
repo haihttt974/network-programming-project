@@ -1,0 +1,170 @@
+@{
+    ViewData["Title"] = "Debug Recruiter System";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Debug Recruiter System</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Test AJAX Requests</h5>
+                            
+                            <!-- Test Invite Recruiter -->
+                            <div class="mb-3">
+                                <h6>Test Invite Recruiter</h6>
+                                <form id="testInviteForm">
+                                    <input type="hidden" name="CompanyId" value="1" />
+                                    <div class="mb-2">
+                                        <input type="email" name="UserEmail" class="form-control" placeholder="Email to invite" required />
+                                    </div>
+                                    <div class="mb-2">
+                                        <textarea name="Message" class="form-control" placeholder="Message" rows="2"></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-sm">Test Invite</button>
+                                </form>
+                            </div>
+
+                            <!-- Test Respond to Request -->
+                            <div class="mb-3">
+                                <h6>Test Respond to Request</h6>
+                                <form id="testResponseForm">
+                                    <input type="hidden" name="CompanyId" value="1" />
+                                    <div class="mb-2">
+                                        <input type="number" name="UserId" class="form-control" placeholder="User ID" required />
+                                    </div>
+                                    <div class="mb-2">
+                                        <select name="IsApproved" class="form-control" required>
+                                            <option value="">Select Action</option>
+                                            <option value="true">Approve</option>
+                                            <option value="false">Reject</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-2">
+                                        <textarea name="ResponseMessage" class="form-control" placeholder="Response Message" rows="2"></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-success btn-sm">Test Response</button>
+                                </form>
+                            </div>
+
+                            <!-- Test Request to Join -->
+                            <div class="mb-3">
+                                <h6>Test Request to Join</h6>
+                                <form id="testJoinForm">
+                                    <div class="mb-2">
+                                        <input type="number" name="CompanyId" class="form-control" placeholder="Company ID" required />
+                                    </div>
+                                    <div class="mb-2">
+                                        <textarea name="Message" class="form-control" placeholder="Message" rows="2"></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-info btn-sm">Test Join Request</button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h5>Response Log</h5>
+                            <div id="responseLog" class="border p-3" style="height: 400px; overflow-y: auto; background-color: #f8f9fa;">
+                                <p class="text-muted">Responses will appear here...</p>
+                            </div>
+                            <button type="button" class="btn btn-secondary btn-sm mt-2" onclick="clearLog()">Clear Log</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function logResponse(title, data) {
+    const log = document.getElementById('responseLog');
+    const timestamp = new Date().toLocaleTimeString();
+    const entry = document.createElement('div');
+    entry.className = 'mb-2 p-2 border-bottom';
+    entry.innerHTML = `
+        <strong>[${timestamp}] ${title}</strong><br>
+        <pre class="mb-0" style="font-size: 0.8em;">${JSON.stringify(data, null, 2)}</pre>
+    `;
+    log.appendChild(entry);
+    log.scrollTop = log.scrollHeight;
+}
+
+function clearLog() {
+    document.getElementById('responseLog').innerHTML = '<p class="text-muted">Responses will appear here...</p>';
+}
+
+// Test Invite Recruiter
+document.getElementById('testInviteForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+    
+    logResponse('Invite Request Sent', Object.fromEntries(formData));
+    
+    fetch('@Url.Action("InviteRecruiter", "Company")', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        logResponse('Invite Response', data);
+    })
+    .catch(error => {
+        logResponse('Invite Error', { error: error.message });
+    });
+});
+
+// Test Respond to Request
+document.getElementById('testResponseForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+    
+    logResponse('Response Request Sent', Object.fromEntries(formData));
+    
+    fetch('@Url.Action("RespondToRequest", "Company")', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        logResponse('Response Response', data);
+    })
+    .catch(error => {
+        logResponse('Response Error', { error: error.message });
+    });
+});
+
+// Test Request to Join
+document.getElementById('testJoinForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+    
+    logResponse('Join Request Sent', Object.fromEntries(formData));
+    
+    fetch('@Url.Action("RequestToJoin", "Company")', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        logResponse('Join Response', data);
+    })
+    .catch(error => {
+        logResponse('Join Error', { error: error.message });
+    });
+});
+</script>
+}
+
+@Html.AntiForgeryToken()

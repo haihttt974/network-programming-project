@@ -1,0 +1,212 @@
+@model List<DKyThucTap.Models.DTOs.Position.PositionHistoryDto>
+@{
+    ViewData["Title"] = "Lịch sử thay đổi vị trí";
+    var position = ViewBag.Position as DKyThucTap.Models.DTOs.Position.PositionDetailDto;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="card-title mb-1">
+                            <i class="fas fa-history me-2"></i>
+                            Lịch sử thay đổi
+                        </h3>
+                        @if (position != null)
+                        {
+                            <p class="text-muted mb-0">
+                                Vị trí: <strong>@position.Title</strong> - @position.CompanyName
+                            </p>
+                        }
+                    </div>
+                    <div class="btn-group">
+                        @if (position != null)
+                        {
+                            <a href="@Url.Action("Details", "Position", new { id = position.PositionId })" 
+                               class="btn btn-outline-info btn-sm">
+                                <i class="fas fa-eye me-1"></i>
+                                Xem chi tiết
+                            </a>
+                            <a href="@Url.Action("Edit", "Position", new { id = position.PositionId })" 
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-edit me-1"></i>
+                                Chỉnh sửa
+                            </a>
+                        }
+                        <a href="@Url.Action("My", "Position")" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-arrow-left me-1"></i>
+                            Quay lại
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    @if (Model.Any())
+                    {
+                        <div class="timeline">
+                            @foreach (var history in Model)
+                            {
+                                <div class="timeline-item">
+                                    <div class="timeline-marker">
+                                        <i class="fas fa-@(GetIconForChangeType(history.ChangeType))"></i>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-header">
+                                            <h6 class="timeline-title">@history.ChangeType</h6>
+                                            <small class="text-muted">
+                                                @history.ChangedAt?.ToString("dd/MM/yyyy HH:mm") - 
+                                                bởi @(history.ChangedByUserName ?? "Unknown")
+                                            </small>
+                                        </div>
+                                        <div class="timeline-body">
+                                            @if (!string.IsNullOrEmpty(history.OldValue) || !string.IsNullOrEmpty(history.NewValue))
+                                            {
+                                                <div class="row">
+                                                    @if (!string.IsNullOrEmpty(history.OldValue))
+                                                    {
+                                                        <div class="col-md-6">
+                                                            <strong>Giá trị cũ:</strong>
+                                                            <div class="bg-light p-2 rounded mt-1">
+                                                                <code class="text-danger">@history.OldValue</code>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(history.NewValue))
+                                                    {
+                                                        <div class="col-md-6">
+                                                            <strong>Giá trị mới:</strong>
+                                                            <div class="bg-light p-2 rounded mt-1">
+                                                                <code class="text-success">@history.NewValue</code>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                            @if (!string.IsNullOrEmpty(history.Notes))
+                                            {
+                                                <div class="mt-2">
+                                                    <strong>Ghi chú:</strong>
+                                                    <p class="text-muted mb-0">@history.Notes</p>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">Chưa có lịch sử thay đổi</h4>
+                            <p class="text-muted">Vị trí này chưa được chỉnh sửa lần nào</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -22px;
+    top: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.timeline-content {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.timeline-header {
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.timeline-title {
+    margin: 0;
+    color: #495057;
+}
+
+.timeline-body code {
+    font-size: 0.9em;
+    padding: 2px 4px;
+    border-radius: 3px;
+    background: transparent !important;
+}
+
+.timeline-item:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-item:last-child::after {
+    content: '';
+    position: absolute;
+    left: -15px;
+    bottom: -15px;
+    width: 2px;
+    height: 15px;
+    background: #fff;
+}
+</style>
+
+@functions {
+    string GetIconForChangeType(string changeType)
+    {
+        return changeType.ToLower() switch
+        {
+            var ct when ct.Contains("created") => "plus-circle",
+            var ct when ct.Contains("title") => "heading",
+            var ct when ct.Contains("description") => "file-alt",
+            var ct when ct.Contains("type") => "briefcase",
+            var ct when ct.Contains("location") => "map-marker-alt",
+            var ct when ct.Contains("remote") => "home",
+            var ct when ct.Contains("salary") => "dollar-sign",
+            var ct when ct.Contains("deadline") => "calendar",
+            var ct when ct.Contains("category") => "tag",
+            var ct when ct.Contains("active") => "toggle-on",
+            var ct when ct.Contains("skills") => "tools",
+            _ => "edit"
+        };
+    }
+}

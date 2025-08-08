@@ -1,0 +1,423 @@
+﻿@model IEnumerable<DKyThucTap.Models.Conversation>
+@{
+    ViewData["Title"] = "Tin nhắn realtime";
+    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+}
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+
+<style>
+    body {
+        background-color: #f4f6f9;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .list-group-item {
+        transition: background-color 0.2s ease-in-out;
+        border: none;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+        .list-group-item:hover {
+            background-color: #f1f3f5;
+        }
+
+    .card {
+        border-radius: 15px;
+        overflow: hidden;
+        border: none;
+    }
+
+    .card-header {
+        border-bottom: none;
+    }
+
+    .avatar-container {
+        position: relative;
+        display: inline-block;
+    }
+
+    .online-dot {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 12px;
+        height: 12px;
+        background-color: #28a745;
+        border: 2px solid white;
+        border-radius: 50%;
+        display: none;
+    }
+
+        .online-dot.active {
+            display: block;
+        }
+
+    #messagesList {
+        background-color: #ffffff;
+        padding: 15px;
+        border-radius: 0 0 15px 15px;
+    }
+
+    .chat-bubble {
+        padding: 10px 15px;
+        border-radius: 18px;
+        font-size: 14px;
+        max-width: 70%;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+        .chat-bubble.me {
+            background-color: #0d6efd;
+            color: white;
+        }
+
+        .chat-bubble.them {
+            background-color: #e9ecef;
+            color: #212529;
+        }
+
+    #messageInput {
+        border-radius: 20px;
+        padding: 10px 15px;
+    }
+
+    #sendButton {
+        border-radius: 50%;
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .badge {
+        font-size: 12px;
+        padding: 6px 8px;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="row g-4">
+        <!-- Sidebar danh sách hội thoại -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light fw-bold">Hội thoại</div>
+                <div class="list-group list-group-flush" id="conversationList">
+                    @if (!Model.Any())
+                    {
+                        <div class="list-group-item text-center text-muted">
+                            <i class="fas fa-comments"></i> Chưa có cuộc trò chuyện nào
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var conv in Model)
+                        {
+                            var otherUser = conv.Participant1UserId.ToString() == currentUserId
+                            ? conv.Participant2User
+                            : conv.Participant1User;
+
+                            var isRecruiter = otherUser.Role?.RoleName == "Recruiter";
+                            var profileUrl = isRecruiter
+                            ? Url.Action("Recruiter", "Profile", new { recruiterId = otherUser.UserId })
+                            : Url.Action("Candidate", "Profile", new { id = otherUser.UserId });
+
+                            <a href="javascript:void(0)"
+                               class="list-group-item list-group-item-action conversation-item"
+                               data-conversation-id="@conv.ConversationId"
+                               data-other-id="@(otherUser.UserId)"
+                               data-name="@($"{otherUser.UserProfile?.FirstName} {otherUser.UserProfile?.LastName}")"
+                               data-avatar="@((otherUser.UserProfile?.ProfilePictureUrl) ?? "/images/profiles/default-avatar.png")"
+                               data-profile-url="@profileUrl"
+                               id="conversation-@conv.ConversationId">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-container me-2">
+                                            <img src="@((otherUser.UserProfile?.ProfilePictureUrl) ?? "/images/profiles/default-avatar.png")"
+                                                 class="rounded-circle user-avatar"
+                                                 width="45" height="45"
+                                                 data-user-id="@otherUser.UserId" />
+                                            <span class="online-dot" id="dot-@otherUser.UserId"></span>
+                                        </div>
+                                        <div>
+                                            <span class="fw-semibold">@($"{otherUser.UserProfile?.FirstName} {otherUser.UserProfile?.LastName}")</span>
+                                            <small class="text-muted d-block">
+                                                Cập nhật: @conv.LastMessageAt?.ToLocalTime().ToString("HH:mm dd/MM")
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <span class="badge bg-danger d-none" id="badge-@conv.ConversationId">0</span>
+                                </div>
+                            </a>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Cửa sổ chat -->
+        <div class="col-md-8">
+            <div class="card shadow-sm" id="chatCard" style="display:none;">
+                <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between" style="cursor:pointer;" id="chatHeader">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar-container me-2">
+                            <img id="chatAvatar" src="/images/profiles/default-avatar.png" class="rounded-circle" width="45" height="45" />
+                            <span class="online-dot" id="chatDot"></span>
+                        </div>
+                        <div>
+                            <strong id="chatName">Đang tải...</strong>
+                            <div id="chatOnlineStatus"
+                                 class="small d-none"
+                                 style="color: #f8f9fa; text-shadow: 0 0 3px rgba(0,0,0,0.5); font-weight:500;">
+                                Đang hoạt động
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body" id="messagesList" style="height: 400px; overflow-y: auto;">
+                    <!-- Tin nhắn sẽ hiển thị tại đây -->
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="input-group">
+                        <input type="text" id="messageInput" class="form-control" placeholder="Nhập tin nhắn..." />
+                        <button class="btn btn-success" id="sendButton">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="alert alert-info text-center shadow-sm" id="noChat" style="display:block;">
+                Chọn một cuộc trò chuyện để bắt đầu.
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const currentUserId = "@currentUserId";
+        let selectedConversationId = null;
+        let receiverUserId = null;
+        let connectionStarted = false;
+        let profileUrl = null;
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/chathub")
+            .build();
+
+        async function startConnection() {
+            try {
+                await connection.start();
+                connectionStarted = true;
+                console.log("✅ Connected to ChatHub");
+            } catch (err) {
+                console.error("❌ Lỗi kết nối SignalR:", err);
+                setTimeout(startConnection, 3000);
+            }
+        }
+        startConnection();
+
+        // Nhận tin nhắn realtime
+        connection.on("ReceiveMessage", function (senderId, message, time) {
+            if (selectedConversationId === null) return;
+
+            const alignment = senderId == currentUserId ? "justify-content-end" : "justify-content-start";
+            const bubbleClass = senderId == currentUserId ? "bg-success text-white" : "bg-light";
+            const avatarHtml = senderId == currentUserId ? "" :
+                `<img src="${document.getElementById("chatAvatar").src}"
+                      class="rounded-circle me-2" width="30" height="30" />`;
+
+            const msgHtml = `
+                <div class="d-flex ${alignment} mb-2">
+                    ${avatarHtml}
+                    <div class="p-2 rounded ${bubbleClass}" style="max-width:70%;">
+                        ${message}
+                        <div class="small text-muted">${time}</div>
+                    </div>
+                </div>`;
+            document.getElementById("messagesList").innerHTML += msgHtml;
+            scrollToBottom();
+        });
+
+        // Hàm gửi tin nhắn
+        async function sendMessage() {
+            const messageInput = document.getElementById("messageInput");
+            const message = messageInput.value.trim();
+
+            if (!message || !selectedConversationId) return;
+
+            if (!connectionStarted) {
+                console.warn("⚠️ Connection chưa sẵn sàng!");
+                return;
+            }
+
+            try {
+                await connection.invoke("SendMessage", parseInt(selectedConversationId), message);
+                messageInput.value = "";
+            } catch (err) {
+                console.error("❌ Lỗi khi gửi tin nhắn:", err);
+            }
+        }
+
+        document.getElementById("sendButton").addEventListener("click", sendMessage);
+        document.getElementById("messageInput").addEventListener("keypress", function (e) {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Khi click vào hội thoại
+        document.querySelectorAll(".conversation-item").forEach(item => {
+            item.addEventListener("click", () => {
+                selectedConversationId = item.getAttribute("data-conversation-id");
+                receiverUserId = item.getAttribute("data-other-id");
+                const name = item.getAttribute("data-name");
+                const avatar = item.getAttribute("data-avatar");
+                profileUrl = item.getAttribute("data-profile-url");
+
+                document.getElementById("chatCard").style.display = "block";
+                document.getElementById("noChat").style.display = "none";
+                document.getElementById("chatName").innerText = name;
+                document.getElementById("chatAvatar").src = avatar;
+
+                document.getElementById("chatHeader").onclick = () => {
+                    if (profileUrl) window.location.href = profileUrl;
+                };
+
+                fetch(`/Messages/GetMessages?conversationId=${selectedConversationId}`)
+                    .then(res => res.json())
+                    .then(messages => {
+                        const messagesList = document.getElementById("messagesList");
+                        messagesList.innerHTML = "";
+                        messages.forEach(m => {
+                            const alignment = m.senderUserId == currentUserId ? "justify-content-end" : "justify-content-start";
+                            const bubbleClass = m.senderUserId == currentUserId ? "bg-success text-white" : "bg-light";
+                            const avatarHtml = m.senderUserId == currentUserId ? "" :
+                                `<img src="${avatar}" class="rounded-circle me-2" width="30" height="30" />`;
+
+                            // ✅ Convert giờ server trả về sang giờ local
+                            const localTime = new Date(m.sentAt).toLocaleString("vi-VN", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                day: "2-digit",
+                                month: "2-digit"
+                            });
+
+                            const msgHtml = `
+                                <div class="d-flex ${alignment} mb-2">
+                                    ${avatarHtml}
+                                    <div class="p-2 rounded ${bubbleClass}" style="max-width:70%;">
+                                        ${m.messageText}
+                                        <div class="small text-muted">${localTime}</div>
+                                    </div>
+                                </div>`;
+                            messagesList.innerHTML += msgHtml;
+                        });
+                        scrollToBottom();
+                    });
+            });
+        });
+
+        // Cập nhật trạng thái online cho toàn bộ danh sách
+        async function updateAllUsersOnlineStatus() {
+            document.querySelectorAll(".user-avatar").forEach(async avatar => {
+                const userId = avatar.getAttribute("data-user-id");
+                try {
+                    const response = await fetch(`/api/OnlineUsers/is-online/${userId}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        const dotEl = document.getElementById(`dot-${userId}`);
+                        const chatDotEl = document.getElementById("chatDot");
+                        const chatStatusEl = document.getElementById("chatOnlineStatus");
+
+                        if (data.isOnline) {
+                            if (dotEl) dotEl.classList.add("active");
+                            if (receiverUserId == userId) {
+                                chatDotEl.classList.add("active");
+                                chatStatusEl.classList.remove("d-none");
+                            }
+                        } else {
+                            if (dotEl) dotEl.classList.remove("active");
+                            if (receiverUserId == userId) {
+                                chatDotEl.classList.remove("active");
+                                chatStatusEl.classList.add("d-none");
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error("Lỗi khi kiểm tra online:", error);
+                }
+            });
+        }
+
+        // Cập nhật trạng thái mỗi 3s
+        setInterval(updateAllUsersOnlineStatus, 3000);
+        updateAllUsersOnlineStatus();
+
+        async function updateUnreadConversations() {
+            try {
+                const response = await fetch('/Messages/UnreadPerConversation');
+                if (response.ok) {
+                    const data = await response.json();
+
+                    document.querySelectorAll('[id^="badge-"]').forEach(badge => {
+                        badge.textContent = 0;
+                        badge.classList.add("d-none");
+                        badge.closest("a").classList.remove("active", "bg-light");
+                    });
+
+                    data.forEach(item => {
+                        const badge = document.getElementById(`badge-${item.conversationId}`);
+                        if (badge) {
+                            badge.textContent = item.count;
+                            badge.classList.remove("d-none");
+                            const conversationItem = badge.closest("a");
+                            conversationItem.classList.add("bg-light");
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error("Lỗi khi cập nhật unread per conversation:", error);
+            }
+        }
+        // Khi người dùng focus vào ô nhập tin nhắn → đánh dấu đã đọc
+        document.getElementById("messageInput").addEventListener("focus", async function () {
+            if (selectedConversationId) {
+                try {
+                    const response = await fetch(`/Messages/MarkAsRead?conversationId=${selectedConversationId}`, {
+                        method: "POST"
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log(`✅ Đánh dấu ${result.count} tin nhắn là đã đọc`);
+
+                        // Xóa badge chưa đọc
+                        const badge = document.getElementById(`badge-${selectedConversationId}`);
+                        if (badge) {
+                            badge.textContent = "0";
+                            badge.classList.add("d-none");
+                        }
+
+                        // Cập nhật lại danh sách chưa đọc
+                        updateUnreadConversations();
+                    }
+                } catch (error) {
+                    console.error("❌ Lỗi khi gọi MarkAsRead:", error);
+                }
+            }
+        });
+
+        updateUnreadConversations();
+        setInterval(updateUnreadConversations, 1500);
+
+        function scrollToBottom() {
+            const chatBox = document.getElementById("messagesList");
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+}

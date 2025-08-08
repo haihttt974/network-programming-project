@@ -1,0 +1,472 @@
+@model DKyThucTap.Models.DTOs.Company.CompanyDetailDto
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Company Header -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center">
+                                @if (!string.IsNullOrEmpty(Model.LogoUrl))
+                                {
+                                    <img src="@Model.LogoUrl" alt="@Model.Name" 
+                                         class="me-3" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+                                }
+                                else
+                                {
+                                    <div class="me-3" style="width: 80px; height: 80px; background-color: #f8f9fa; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-building fa-2x text-muted"></i>
+                                    </div>
+                                }
+                                <div>
+                                    <h1 class="mb-1">@Model.Name</h1>
+                                    @if (!string.IsNullOrEmpty(Model.Industry))
+                                    {
+                                        <p class="text-muted mb-1">@Model.Industry</p>
+                                    }
+                                    @if (!string.IsNullOrEmpty(Model.Location))
+                                    {
+                                        <p class="text-muted mb-0">
+                                            <i class="fas fa-map-marker-alt me-1"></i>@Model.Location
+                                        </p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            @if (!string.IsNullOrEmpty(Model.UserRole))
+                            {
+                                <span class="badge @(Model.UserRole == "Owner" ? "bg-success" : Model.UserRole == "Recruiter" ? "bg-primary" : "bg-warning") mb-2">
+                                    @(Model.UserRole == "Owner" ? "Chủ sở hữu" : Model.UserRole == "Recruiter" ? "Nhân viên" : "Chờ duyệt")
+                                </span>
+                                <br>
+                            }
+                            <div class="btn-group">
+                                @if (Model.CanManage)
+                                {
+                                    <a href="@Url.Action("Edit", "Company", new { id = Model.CompanyId })"
+                                       class="btn btn-primary">
+                                        <i class="fas fa-edit me-1"></i>Chỉnh sửa
+                                    </a>
+                                    <a href="@Url.Action("Recruiters", "Company", new { id = Model.CompanyId })"
+                                       class="btn btn-success">
+                                        <i class="fas fa-users me-1"></i>Quản lý nhân viên
+                                    </a>
+                                }
+                                else if (User.Identity.IsAuthenticated && string.IsNullOrEmpty(Model.UserRole))
+                                {
+                                    <button type="button" class="btn btn-primary" onclick="requestToJoinCompany(@Model.CompanyId, '@Model.Name')">
+                                        <i class="fas fa-user-plus me-1"></i>Yêu cầu tham gia
+                                    </button>
+                                }
+                                else if (Model.UserRole == "Recruiter")
+                                {
+                                    <button type="button" class="btn btn-outline-danger" onclick="leaveCompany(@Model.CompanyId, '@Model.Name')">
+                                        <i class="fas fa-sign-out-alt me-1"></i>Rời khỏi công ty
+                                    </button>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.Website))
+                                {
+                                    <a href="@Model.Website" target="_blank" class="btn btn-outline-secondary">
+                                        <i class="fas fa-globe me-1"></i>Website
+                                    </a>
+                                }
+                                <a href="@Url.Action("Index", "Company")" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i>Quay lại
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Company Information -->
+                <div class="col-md-8">
+                    <!-- Description -->
+                    @if (!string.IsNullOrEmpty(Model.Description))
+                    {
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>Giới thiệu công ty
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-0">@Model.Description</p>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Recent Positions -->
+                    @if (Model.RecentPositions.Any())
+                    {
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-briefcase me-2"></i>Vị trí tuyển dụng gần đây
+                                </h5>
+                                <a href="@Url.Action("Index", "Position", new { companyId = Model.CompanyId })" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    Xem tất cả
+                                </a>
+                            </div>
+                            <div class="card-body">
+                                @foreach (var position in Model.RecentPositions)
+                                {
+                                    <div class="d-flex justify-content-between align-items-center py-2 @(position != Model.RecentPositions.Last() ? "border-bottom" : "")">
+                                        <div>
+                                            <h6 class="mb-1">
+                                                <a href="@Url.Action("Details", "Position", new { id = position.PositionId })" 
+                                                   class="text-decoration-none">
+                                                    @position.Title
+                                                </a>
+                                            </h6>
+                                            <small class="text-muted">
+                                                @position.PositionType • @position.CreatedAt?.ToString("dd/MM/yyyy")
+                                            </small>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="badge @(position.IsActive == true ? "bg-success" : "bg-secondary")">
+                                                @(position.IsActive == true ? "Đang tuyển" : "Đã đóng")
+                                            </span>
+                                            <br>
+                                            <small class="text-muted">@position.ApplicationCount ứng viên</small>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Recruiters -->
+                    @if (Model.Recruiters.Any())
+                    {
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-users me-2"></i>Đội ngũ tuyển dụng
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    @foreach (var recruiter in Model.Recruiters.Take(6))
+                                    {
+                                        <div class="col-md-6 mb-3">
+                                            <div class="d-flex align-items-center">
+                                                @if (!string.IsNullOrEmpty(recruiter.ProfilePictureUrl))
+                                                {
+                                                    <img src="@recruiter.ProfilePictureUrl" alt="@recruiter.Name" 
+                                                         class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                                                }
+                                                else
+                                                {
+                                                    <div class="rounded-circle me-3 bg-light d-flex align-items-center justify-content-center" 
+                                                         style="width: 40px; height: 40px;">
+                                                        <i class="fas fa-user text-muted"></i>
+                                                    </div>
+                                                }
+                                                <div>
+                                                    <h6 class="mb-0">@recruiter.Name</h6>
+                                                    <small class="text-muted">
+                                                        @recruiter.Status
+                                                        @if (recruiter.PositionCount > 0)
+                                                        {
+                                                            <span> • @recruiter.PositionCount vị trí</span>
+                                                        }
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                                @if (Model.Recruiters.Count > 6)
+                                {
+                                    <div class="text-center">
+                                        <small class="text-muted">và @(Model.Recruiters.Count - 6) người khác...</small>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Statistics Sidebar -->
+                <div class="col-md-4">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-bar me-2"></i>Thống kê
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-6 mb-3">
+                                    <h4 class="text-primary mb-0">@Model.PositionCount</h4>
+                                    <small class="text-muted">Tổng vị trí</small>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <h4 class="text-success mb-0">@Model.ActivePositionCount</h4>
+                                    <small class="text-muted">Đang tuyển</small>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <h4 class="text-info mb-0">@Model.TotalApplications</h4>
+                                    <small class="text-muted">Tổng ứng viên</small>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <h4 class="text-warning mb-0">@Model.RecruiterCount</h4>
+                                    <small class="text-muted">Nhân viên</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-info me-2"></i>Thông tin
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <strong>Ngày thành lập:</strong>
+                                <br><span class="text-muted">@Model.CreatedAt?.ToString("dd/MM/yyyy")</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(Model.CreatedByName))
+                            {
+                                <div class="mb-3">
+                                    <strong>Người tạo:</strong>
+                                    <br><span class="text-muted">@Model.CreatedByName</span>
+                                </div>
+                            }
+                            @if (Model.UserRole != null && Model.JoinedAt.HasValue)
+                            {
+                                <div class="mb-3">
+                                    <strong>Ngày tham gia:</strong>
+                                    <br><span class="text-muted">@Model.JoinedAt?.ToString("dd/MM/yyyy")</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Container -->
+<div id="notificationContainer" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
+
+<!-- Join Company Modal -->
+<div class="modal fade" id="joinCompanyModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Yêu cầu tham gia công ty
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="joinCompanyForm">
+                <div class="modal-body">
+                    <input type="hidden" id="joinCompanyId" name="CompanyId" />
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Bạn đang yêu cầu tham gia công ty <strong id="joinCompanyName"></strong> với vai trò nhân viên tuyển dụng.
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="joinMessage" class="form-label">Lời nhắn giới thiệu (tùy chọn)</label>
+                        <textarea class="form-control" id="joinMessage" name="Message" rows="4"
+                                  placeholder="Giới thiệu bản thân và lý do muốn tham gia công ty..."></textarea>
+                        <div class="form-text">Tối đa 500 ký tự. Lời nhắn này sẽ được gửi đến quản lý công ty.</div>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Lưu ý:</strong> Yêu cầu của bạn sẽ được gửi đến quản lý công ty để phê duyệt. Bạn sẽ nhận được thông báo khi có phản hồi.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-1"></i>
+                        Gửi yêu cầu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Custom CSS -->
+<style>
+@@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+.toast-notification {
+    min-width: 300px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    animation: slideInRight 0.3s ease-out;
+}
+
+.toast-notification:hover {
+    transform: translateX(-5px);
+}
+
+#notificationContainer {
+    max-width: 400px;
+}
+</style>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Join Company Form
+    const joinForm = document.getElementById('joinCompanyForm');
+    if (joinForm) {
+        joinForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Đang gửi...';
+
+            // Prepare form data
+            const formData = new FormData(this);
+
+            // Add CSRF token to form data
+            const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            formData.append('__RequestVerificationToken', csrfToken);
+
+            // Submit via AJAX
+            fetch('@Url.Action("RequestToJoin", "Company")', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('success', data.message);
+                    bootstrap.Modal.getInstance(document.getElementById('joinCompanyModal')).hide();
+                    this.reset();
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showNotification('error', data.message);
+                    if (data.errors && data.errors.length > 0) {
+                        data.errors.forEach(error => showNotification('error', error));
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('error', 'Có lỗi xảy ra khi gửi yêu cầu');
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            });
+        });
+    }
+});
+
+// Request to join company function
+function requestToJoinCompany(companyId, companyName) {
+    document.getElementById('joinCompanyId').value = companyId;
+    document.getElementById('joinCompanyName').textContent = companyName;
+    new bootstrap.Modal(document.getElementById('joinCompanyModal')).show();
+}
+
+// Leave company function
+function leaveCompany(companyId, companyName) {
+    if (confirm(`Bạn có chắc chắn muốn rời khỏi công ty "${companyName}"? Hành động này không thể hoàn tác.`)) {
+        // Prepare form data
+        const formData = new FormData();
+        formData.append('companyId', companyId);
+        formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+
+        // Submit via AJAX
+        fetch('@Url.Action("Leave", "Company")', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('success', data.message);
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showNotification('error', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('error', 'Có lỗi xảy ra khi rời khỏi công ty');
+        });
+    }
+}
+
+// Notification system
+function showNotification(type, message) {
+    const container = document.getElementById('notificationContainer');
+
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show toast-notification`;
+
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    // Add to container
+    container.appendChild(notification);
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.style.animation = 'slideOutRight 0.3s ease-in';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 300);
+        }
+    }, 5000);
+}
+</script>
+}
+
+<!-- Add CSRF Token -->
+@Html.AntiForgeryToken()

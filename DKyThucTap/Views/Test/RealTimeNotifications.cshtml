@@ -1,0 +1,356 @@
+@{
+    ViewData["Title"] = "Real-time Notifications Test";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Real-time Notifications Test</h3>
+                    <p class="text-muted mb-0">Test real-time notification delivery via SignalR</p>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle me-2"></i>How to Test Real-time Notifications:</h6>
+                        <ol class="mb-0">
+                            <li><strong>Open multiple browser tabs</strong> with this page</li>
+                            <li><strong>Create notifications</strong> in one tab and watch them appear instantly in other tabs</li>
+                            <li><strong>Watch for toast notifications</strong> that pop up automatically</li>
+                            <li><strong>Check the notification bell</strong> - it should update immediately without page refresh</li>
+                            <li><strong>Test with different users</strong> by logging in with different accounts in different browsers</li>
+                        </ol>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Create Test Notifications</h5>
+                            
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-primary" onclick="createInstantNotification()">
+                                    <i class="fas fa-bolt me-1"></i>Create Instant Notification
+                                </button>
+                                <small class="form-text text-muted">Creates a notification that should appear immediately</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-success" onclick="createJobNotification()">
+                                    <i class="fas fa-briefcase me-1"></i>Job Application Notification
+                                </button>
+                                <small class="form-text text-muted">Simulates a job application notification</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-warning" onclick="createSystemNotification()">
+                                    <i class="fas fa-bullhorn me-1"></i>System Announcement
+                                </button>
+                                <small class="form-text text-muted">Creates a system-wide announcement</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-info" onclick="createMultipleNotifications()">
+                                    <i class="fas fa-layer-group me-1"></i>Create 3 Notifications
+                                </button>
+                                <small class="form-text text-muted">Creates multiple notifications to test batching</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="autoCreateNotifications">
+                                    <label class="form-check-label" for="autoCreateNotifications">
+                                        Auto-create notifications every 10 seconds
+                                    </label>
+                                </div>
+                                <small class="form-text text-muted">Continuously create notifications for stress testing</small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h5>Real-time Status</h5>
+                            
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <div class="card bg-primary text-white">
+                                        <div class="card-body text-center">
+                                            <h4 class="mb-0" id="realtime-count">0</h4>
+                                            <p class="mb-0">Notifications Received</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="card bg-success text-white">
+                                        <div class="card-body text-center">
+                                            <h4 class="mb-0" id="signalr-status-indicator">❌</h4>
+                                            <p class="mb-0">SignalR Status</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <h6>Connection Info</h6>
+                                <div id="connection-info" class="bg-light p-3 rounded">
+                                    <small class="text-muted">Connection information will appear here</small>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <h6>Real-time Event Log</h6>
+                                <div id="realtime-log" class="bg-dark text-light p-3 rounded" style="height: 250px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+                                    <p class="text-muted mb-0">Real-time events will appear here...</p>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-outline-primary" onclick="refreshConnectionInfo()">
+                                    <i class="fas fa-sync-alt me-1"></i>Refresh Info
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="clearRealtimeLog()">
+                                    <i class="fas fa-trash me-1"></i>Clear Log
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Multi-tab Testing Instructions</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6>Tab 1 (This tab):</h6>
+                                            <ul class="small">
+                                                <li>Create notifications using the buttons above</li>
+                                                <li>Watch the real-time event log</li>
+                                                <li>Monitor SignalR connection status</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6>Tab 2 (Open another tab):</h6>
+                                            <ul class="small">
+                                                <li>Open this same page in a new tab</li>
+                                                <li>Watch for toast notifications appearing</li>
+                                                <li>Check notification bell updates</li>
+                                                <li>Verify real-time event log updates</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let realtimeNotificationCount = 0;
+let autoCreateInterval = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    setupRealtimeEventListeners();
+    refreshConnectionInfo();
+    
+    // Auto-create checkbox handler
+    document.getElementById('autoCreateNotifications').addEventListener('change', function() {
+        if (this.checked) {
+            startAutoCreate();
+        } else {
+            stopAutoCreate();
+        }
+    });
+});
+
+function logRealtimeEvent(message, type = 'info') {
+    const log = document.getElementById('realtime-log');
+    const timestamp = new Date().toLocaleTimeString();
+    const entry = document.createElement('div');
+    
+    const color = type === 'error' ? 'text-danger' : 
+                  type === 'success' ? 'text-success' : 
+                  type === 'warning' ? 'text-warning' : 'text-light';
+    
+    entry.className = `mb-1 ${color}`;
+    entry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+    log.appendChild(entry);
+    log.scrollTop = log.scrollHeight;
+}
+
+function clearRealtimeLog() {
+    document.getElementById('realtime-log').innerHTML = '<p class="text-muted mb-0">Real-time events cleared...</p>';
+    realtimeNotificationCount = 0;
+    document.getElementById('realtime-count').textContent = '0';
+}
+
+function setupRealtimeEventListeners() {
+    // Listen for new notifications
+    window.addEventListener('newNotification', function(event) {
+        const notification = event.detail;
+        realtimeNotificationCount++;
+        document.getElementById('realtime-count').textContent = realtimeNotificationCount;
+        
+        logRealtimeEvent(`🔔 NEW: ${notification.title}`, 'success');
+        logRealtimeEvent(`   └─ ${notification.message}`, 'info');
+    });
+    
+    // Listen for system notifications
+    window.addEventListener('systemNotification', function(event) {
+        const notification = event.detail;
+        realtimeNotificationCount++;
+        document.getElementById('realtime-count').textContent = realtimeNotificationCount;
+        
+        logRealtimeEvent(`📢 SYSTEM: ${notification.title}`, 'warning');
+        logRealtimeEvent(`   └─ ${notification.message}`, 'info');
+    });
+    
+    // Monitor SignalR connection status
+    setInterval(() => {
+        if (window.notificationManager) {
+            const status = window.notificationManager.getStatus();
+            const indicator = document.getElementById('signalr-status-indicator');
+            
+            if (status.signalRConnected) {
+                indicator.textContent = '✅';
+                indicator.parentElement.className = 'card bg-success text-white';
+            } else {
+                indicator.textContent = '❌';
+                indicator.parentElement.className = 'card bg-danger text-white';
+            }
+        }
+    }, 2000);
+}
+
+function refreshConnectionInfo() {
+    if (window.notificationManager) {
+        const status = window.notificationManager.getStatus();
+        const info = document.getElementById('connection-info');
+        
+        info.innerHTML = `
+            <strong>SignalR Connected:</strong> ${status.signalRConnected ? 'Yes' : 'No'}<br>
+            <strong>Connection State:</strong> ${status.signalRState}<br>
+            <strong>Authentication:</strong> ${status.isAuthenticated ? 'Yes' : 'No'}<br>
+            <strong>Polling Interval:</strong> ${status.hasUpdateInterval ? 'Active' : 'Inactive'}<br>
+            <strong>Current Badge Count:</strong> ${status.currentCount}
+        `;
+    }
+}
+
+async function createInstantNotification() {
+    logRealtimeEvent('Creating instant notification...', 'info');
+    
+    try {
+        const response = await fetch('/Test/Notification/CreateJobApplication', {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            logRealtimeEvent('✓ Notification created - should appear instantly!', 'success');
+        } else {
+            logRealtimeEvent(`✗ Failed: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        logRealtimeEvent(`✗ Error: ${error.message}`, 'error');
+    }
+}
+
+async function createJobNotification() {
+    logRealtimeEvent('Creating job notification...', 'info');
+    
+    try {
+        const response = await fetch('/Test/Notification/CreateJobStatusUpdate', {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            logRealtimeEvent('✓ Job notification created!', 'success');
+        } else {
+            logRealtimeEvent(`✗ Failed: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        logRealtimeEvent(`✗ Error: ${error.message}`, 'error');
+    }
+}
+
+async function createSystemNotification() {
+    logRealtimeEvent('Creating system notification...', 'info');
+    
+    try {
+        const response = await fetch('/Test/Notification/CreateSystemAnnouncement', {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            logRealtimeEvent('✓ System notification created!', 'success');
+        } else {
+            logRealtimeEvent(`✗ Failed: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        logRealtimeEvent(`✗ Error: ${error.message}`, 'error');
+    }
+}
+
+async function createMultipleNotifications() {
+    logRealtimeEvent('Creating 3 notifications...', 'info');
+    
+    const promises = [
+        createInstantNotification(),
+        createJobNotification(),
+        createSystemNotification()
+    ];
+    
+    try {
+        await Promise.all(promises);
+        logRealtimeEvent('✓ All 3 notifications created!', 'success');
+    } catch (error) {
+        logRealtimeEvent(`✗ Error creating multiple notifications: ${error.message}`, 'error');
+    }
+}
+
+function startAutoCreate() {
+    logRealtimeEvent('Starting auto-create mode...', 'warning');
+    
+    autoCreateInterval = setInterval(async () => {
+        const randomType = Math.floor(Math.random() * 3);
+        
+        switch (randomType) {
+            case 0:
+                await createInstantNotification();
+                break;
+            case 1:
+                await createJobNotification();
+                break;
+            case 2:
+                await createSystemNotification();
+                break;
+        }
+    }, 10000);
+}
+
+function stopAutoCreate() {
+    if (autoCreateInterval) {
+        clearInterval(autoCreateInterval);
+        autoCreateInterval = null;
+        logRealtimeEvent('Stopped auto-create mode', 'warning');
+    }
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (autoCreateInterval) {
+        clearInterval(autoCreateInterval);
+    }
+});
+</script>
+}

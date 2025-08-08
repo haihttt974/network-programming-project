@@ -1,0 +1,321 @@
+﻿@model IEnumerable<DKyThucTap.Models.User>
+@{
+    ViewData["Title"] = "Quản lý người dùng";
+    Layout = "~/Views/Shared/_Layout_Admin.cshtml";
+    var roles = ViewBag.Roles as List<DKyThucTap.Models.Role>;
+    var selectedRole = ViewBag.SelectedRole as string;
+    var search = ViewBag.Search as string;
+}
+
+<!-- Hiển thị thông báo -->
+@{
+    var errorMessage = TempData["ErrorMessage"] as string;
+    var successMessage = TempData["SuccessMessage"] as string;
+}
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @errorMessage
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @successMessage
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">Quản lý người dùng</h1>
+
+    <!-- Form tìm kiếm -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Tìm kiếm người dùng</h6>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row">
+                <div class="col-md-4 mb-3">
+                    <input type="text" name="search" value="@search" class="form-control" placeholder="Tìm theo tên hoặc email" />
+                </div>
+                <div class="col-md-3 mb-3">
+                    <select name="role" class="form-control">
+                        <option value="">-- Tất cả vai trò --</option>
+                        @if (roles != null)
+                        {
+                            @foreach (var role in roles)
+                            {
+                                <option value="@role.RoleName" @(role.RoleName == selectedRole ? "selected" : "")>@role.RoleName</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fas fa-search"></i> Tìm kiếm
+                    </button>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <a href="@Url.Action("Index", "Users", new { area = "Admin" })" class="btn btn-secondary btn-block">
+                        <i class="fas fa-redo"></i> Làm mới
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bảng danh sách người dùng -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Danh sách người dùng (@Model?.Count() ?? 0)</h6>
+        </div>
+        <div class="card-body">
+            @if (Model != null && Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover" id="usersTable">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Email</th>
+                                <th>Họ tên</th>
+                                <th>Vai trò</th>
+                                <th>Trạng thái</th>
+                                <th>Ngày tạo</th>
+                                <th width="200">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in Model)
+                            {
+                                <tr>
+                                    <td>@user.Email</td>
+                                    <td>
+                                        @if (user.UserProfile != null)
+                                        {
+                                            @($"{user.UserProfile.FirstName} {user.UserProfile.LastName}")
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Chưa cập nhật</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(user.Role?.RoleName))
+                                        {
+                                            <span class="badge badge-info">@user.Role.RoleName</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-secondary">Chưa gán vai trò</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (user.IsActive == true)
+                                        {
+                                            <span class="badge badge-success">
+                                                <i class="fas fa-check-circle"></i> Hoạt động
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-danger">
+                                                <i class="fas fa-lock"></i> Đã khóa
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>@(user.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "N/A")</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <!-- Nút chi tiết -->
+                                            <a href="@Url.Action("Details", "Users", new { area = "Admin", id = user.UserId })"
+                                               class="btn btn-info btn-sm" title="Xem chi tiết">
+                                                <i class="fas fa-eye"></i> Chi tiết
+                                            </a>
+
+                                            <!-- Nút khóa/mở khóa -->
+                                            <button type="button"
+                                                    class="btn @(user.IsActive == true ? "btn-warning" : "btn-success") btn-sm"
+                                                    onclick="showConfirmModal(@user.UserId, '@(user.IsActive == true ? "Khóa" : "Mở khóa")', @user.IsActive.ToString().ToLower())"
+                                                    title="@(user.IsActive == true ? "Khóa tài khoản" : "Mở khóa tài khoản")">
+                                                <i class="fas @(user.IsActive == true ? "fa-lock" : "fa-unlock")"></i>
+                                                @(user.IsActive == true ? "Khóa" : "Mở khóa")
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-4">
+                    <i class="fas fa-users fa-3x text-gray-300 mb-3"></i>
+                    <p class="text-gray-500">Không tìm thấy người dùng nào.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Modal xác nhận -->
+<div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form id="confirmForm" method="post" action="@Url.Action("ToggleActive", "Users", new { area = "Admin" })">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="userIdToToggle" />
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmModalLabel">
+                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                        Xác nhận thao tác
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Đóng">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle"></i>
+                        <span id="confirmText"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="adminPassword">
+                            <i class="fas fa-key"></i>
+                            Nhập mật khẩu admin để xác nhận:
+                        </label>
+                        <input type="password"
+                               class="form-control"
+                               name="adminPassword"
+                               id="adminPassword"
+                               placeholder="Mật khẩu admin"
+                               required />
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Hủy
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="confirmBtn">
+                        <i class="fas fa-check"></i> Xác nhận
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <style>
+        .card {
+            transition: transform 0.2s;
+        }
+
+            .card:hover {
+                transform: translateY(-2px);
+            }
+
+        .btn-group .btn {
+            margin-right: 5px;
+        }
+
+            .btn-group .btn:last-child {
+                margin-right: 0;
+            }
+
+        .table th {
+            background-color: #f8f9fc;
+            border-top: none;
+        }
+
+        .badge {
+            font-size: 0.85em;
+        }
+
+        .modal-header {
+            background-color: #f8f9fc;
+            border-bottom: 1px solid #e3e6f0;
+        }
+
+        .alert-warning {
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        function showConfirmModal(userId, actionText, isCurrentlyActive) {
+            console.log('showConfirmModal called with:', { userId, actionText, isCurrentlyActive });
+
+            // Set user ID
+            $('#userIdToToggle').val(userId);
+
+            // Clear password field
+            $('#adminPassword').val('');
+
+            // Set confirmation text
+            const confirmText = `Bạn có chắc chắn muốn ${actionText.toLowerCase()} tài khoản này không?`;
+            $('#confirmText').text(confirmText);
+
+            // Update modal title and button based on action
+            if (isCurrentlyActive) {
+                $('#confirmModalLabel').html('<i class="fas fa-lock text-warning"></i> Xác nhận khóa tài khoản');
+                $('#confirmBtn').removeClass('btn-success').addClass('btn-warning')
+                    .html('<i class="fas fa-lock"></i> Khóa tài khoản');
+            } else {
+                $('#confirmModalLabel').html('<i class="fas fa-unlock text-success"></i> Xác nhận mở khóa tài khoản');
+                $('#confirmBtn').removeClass('btn-warning').addClass('btn-success')
+                    .html('<i class="fas fa-unlock"></i> Mở khóa tài khoản');
+            }
+
+            // Show modal
+            $('#confirmModal').modal('show');
+        }
+
+        $(document).ready(function() {
+            // Auto dismiss alerts after 5 seconds
+            setTimeout(function() {
+                $('.alert').fadeOut('slow');
+            }, 5000);
+
+            // Handle form submission
+            $('#confirmForm').on('submit', function(e) {
+                const password = $('#adminPassword').val().trim();
+                if (!password) {
+                    e.preventDefault();
+                    alert('Vui lòng nhập mật khẩu admin!');
+                    $('#adminPassword').focus();
+                    return false;
+                }
+            });
+
+            // Clear modal when hidden
+            $('#confirmModal').on('hidden.bs.modal', function () {
+                $('#adminPassword').val('');
+                $('#userIdToToggle').val('');
+            });
+
+            // Focus on password field when modal is shown
+            $('#confirmModal').on('shown.bs.modal', function () {
+                $('#adminPassword').focus();
+            });
+
+            console.log('Scripts loaded successfully');
+        });
+    </script>
+}

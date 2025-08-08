@@ -1,0 +1,584 @@
+﻿@model IEnumerable<DKyThucTap.Models.Company>
+@{
+    ViewData["Title"] = "Báo cáo vi phạm công ty";
+    Layout = "~/Views/Shared/_Layout_Admin.cshtml";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-exclamation-triangle text-warning"></i>
+            Báo cáo vi phạm công ty
+        </h1>
+        <div class="btn-group">
+            <a href="@Url.Action("Index", "Companies", new { area = "Admin" })"
+               class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Quay lại quản lý công ty
+            </a>
+        </div>
+    </div>
+
+    <!-- Thống kê tổng quan -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Công ty có vi phạm
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Count()</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Đánh giá tiêu cực
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                @Model.Sum(c => c.CompanyReviews.Count(r => r.Rating <= 2))
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-star fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Cần xem xét gấp
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                @Model.Count(c => c.CompanyReviews.Average(r => r.Rating) <= 1.5)
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-flag fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Đã xử lý
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                @Model.Count(c => !c.Positions.Any(p => p.IsActive == true))
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Danh sách công ty vi phạm -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                Danh sách công ty có báo cáo vi phạm
+            </h6>
+        </div>
+        <div class="card-body">
+            @if (Model != null && Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover" id="violationTable">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Công ty</th>
+                                <th>Mức độ vi phạm</th>
+                                <th>Đánh giá tiêu cực</th>
+                                <th>Nội dung phản ánh</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var company in Model.OrderBy(c => c.CompanyReviews.Average(r => r.Rating)))
+                            {
+                                var averageRating = company.CompanyReviews.Average(r => r.Rating);
+                                var negativeReviews = company.CompanyReviews.Where(r => r.Rating <= 2).ToList();
+                                var isActive = company.Positions.Any(p => p.IsActive == true);
+                                var severityLevel = averageRating <= 1.5 ? "Nghiêm trọng" :
+                                averageRating <= 2.0 ? "Cần xem xét" : "Nhẹ";
+                                var severityClass = averageRating <= 1.5 ? "danger" :
+                                averageRating <= 2.0 ? "warning" : "info";
+
+                                <tr class="@(averageRating <= 1.5 ? "table-danger" : averageRating <= 2.0 ? "table-warning" : "")">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            @if (!string.IsNullOrEmpty(company.LogoUrl))
+                                            {
+                                                <img src="@company.LogoUrl" alt="Logo"
+                                                     class="rounded mr-2" style="width: 30px; height: 30px; object-fit: cover;" />
+                                            }
+                                            else
+                                            {
+                                                <div class="bg-gray-200 rounded mr-2 d-inline-flex align-items-center justify-content-center"
+                                                     style="width: 30px; height: 30px;">
+                                                    <i class="fas fa-building text-gray-400 fa-sm"></i>
+                                                </div>
+                                            }
+                                            <div>
+                                                <strong>@company.Name</strong>
+                                                <br><small class="text-muted">@company.Industry</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge badge-@severityClass badge-pill">
+                                            @severityLevel
+                                        </span>
+                                        <br><small class="text-muted">
+                                            @averageRating.ToString("F1")/5.0 sao
+                                        </small>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge badge-danger">@negativeReviews.Count</span>
+                                        <small class="text-muted">/@company.CompanyReviews.Count() tổng</small>
+                                    </td>
+                                    <td>
+                                        @{
+                                            var recentComplaints = negativeReviews
+                                            .Where(r => !string.IsNullOrEmpty(r.Comment))
+                                            .OrderByDescending(r => r.CreatedAt)
+                                            .Take(2)
+                                            .ToList();
+                                        }
+                                        @if (recentComplaints.Any())
+                                        {
+                                            @foreach (var complaint in recentComplaints)
+                                            {
+                                                <div class="mb-2">
+                                                    <small class="text-danger">
+                                                        <i class="fas fa-quote-left"></i>
+                                                        @(complaint.Comment.Length > 100 ?
+                                                                                                complaint.Comment.Substring(0, 100) + "..." :
+                                                                                                complaint.Comment)
+                                        <i class="fas fa-quote-right"></i>
+                                    </small>
+                                    <br><span class="text-muted" style="font-size: 0.7rem;">
+                                        @complaint.CreatedAt?.ToString("dd/MM/yyyy")
+                                    </span>
+                                </div>
+                                                                }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Chỉ có đánh giá sao thấp</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (isActive)
+                                        {
+                                            <span class="badge badge-warning">
+                                                <i class="fas fa-exclamation-triangle"></i> Đang hoạt động
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-success">
+                                                <i class="fas fa-check"></i> Đã tạm khóa
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="btn-group-vertical btn-group-sm">
+                                            <!-- Nút chi tiết -->
+                                            <a href="@Url.Action("Details", "Companies", new { area = "Admin", id = company.CompanyId })"
+                                               class="btn btn-info btn-sm mb-1" title="Xem chi tiết">
+                                                <i class="fas fa-eye"></i> Chi tiết
+                                            </a>
+
+                                            <!-- Nút xử lý -->
+                                            @if (isActive)
+                                            {
+                                                <button type="button"
+                                                        class="btn btn-warning btn-sm mb-1"
+                                                        onclick="showStatusModal(@company.CompanyId, 'suspend', '@company.Name')"
+                                                        title="Tạm khóa công ty">
+                                                    <i class="fas fa-pause"></i> Tạm khóa
+                                                </button>
+                                            }
+
+                                            <!-- Nút xóa (cho các trường hợp nghiêm trọng) -->
+                                            @if (averageRating <= 1.5)
+                                            {
+                                                <button type="button"
+                                                        class="btn btn-danger btn-sm"
+                                                        onclick="showDeleteModal(@company.CompanyId, '@company.Name')"
+                                                        title="Xóa công ty vi phạm nghiêm trọng">
+                                                    <i class="fas fa-trash"></i> Xóa
+                                                </button>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                    <h4 class="text-success">Tuyệt vời!</h4>
+                    <p class="text-gray-500">Hiện tại không có công ty nào bị báo cáo vi phạm.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Include the same modals from Index page -->
+<!-- Modal xác nhận thay đổi trạng thái -->
+<div class="modal fade" id="statusModal" tabindex="-1" role="dialog" aria-labelledby="statusModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form id="statusForm" method="post" action="@Url.Action("ToggleStatus", "Companies", new { area = "Admin" })">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="companyIdForStatus" />
+                <input type="hidden" name="action" id="statusAction" />
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="statusModalLabel">
+                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                        Xử lý vi phạm
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Đóng">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle"></i>
+                        <span id="statusConfirmText"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="adminPasswordStatus">
+                            <i class="fas fa-key"></i>
+                            Nhập mật khẩu admin để xác nhận:
+                        </label>
+                        <input type="password"
+                               class="form-control"
+                               name="adminPassword"
+                               id="adminPasswordStatus"
+                               placeholder="Mật khẩu admin"
+                               required />
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Hủy
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="statusConfirmBtn">
+                        <i class="fas fa-gavel"></i> Xử lý vi phạm
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal xác nhận xóa -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form id="deleteForm" method="post" action="@Url.Action("Delete", "Companies", new { area = "Admin" })">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="companyIdForDelete" />
+
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteModalLabel">
+                        <i class="fas fa-trash"></i>
+                        Xóa công ty vi phạm nghiêm trọng
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Đóng">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Cảnh báo nghiêm trọng:</strong> <span id="deleteConfirmText"></span>
+                        <br><small>Công ty này sẽ bị xóa vĩnh viễn khỏi hệ thống!</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="deleteReason">
+                            <i class="fas fa-clipboard-list"></i>
+                            Lý do xóa công ty vi phạm: <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control"
+                                  name="reason"
+                                  id="deleteReason"
+                                  rows="4"
+                                  placeholder="Nhập chi tiết lý do xóa công ty (ví dụ: Lừa đảo ứng viên, không trả lương, vi phạm nghiêm trọng chính sách...)"
+                                  required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="adminPasswordDelete">
+                            <i class="fas fa-key"></i>
+                            Mật khẩu admin: <span class="text-danger">*</span>
+                        </label>
+                        <input type="password"
+                               class="form-control"
+                               name="adminPassword"
+                               id="adminPasswordDelete"
+                               placeholder="Nhập mật khẩu admin để xác nhận"
+                               required />
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Hủy
+                    </button>
+                    <button type="submit" class="btn btn-danger" id="deleteConfirmBtn">
+                        <i class="fas fa-trash"></i> Xóa vĩnh viễn
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <style>
+        .border-left-warning {
+            border-left: 4px solid #f6c23e !important;
+        }
+
+        .border-left-danger {
+            border-left: 4px solid #e74a3b !important;
+        }
+
+        .border-left-info {
+            border-left: 4px solid #36b9cc !important;
+        }
+
+        .border-left-success {
+            border-left: 4px solid #1cc88a !important;
+        }
+
+        .table-danger {
+            background-color: rgba(231, 74, 59, 0.1);
+        }
+
+        .table-warning {
+            background-color: rgba(246, 194, 62, 0.1);
+        }
+
+        .card {
+            transition: transform 0.2s;
+        }
+
+            .card:hover {
+                transform: translateY(-2px);
+            }
+
+        .badge {
+            font-size: 0.75em;
+        }
+
+        .modal-header.bg-danger {
+            border-bottom: 1px solid #dc3545;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        .alert-warning {
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+
+        .btn-group-vertical .btn {
+            margin-bottom: 2px;
+        }
+
+            .btn-group-vertical .btn:last-child {
+                margin-bottom: 0;
+            }
+
+        .table th {
+            background-color: #f8f9fc;
+            border-top: none;
+            font-weight: 600;
+        }
+
+        .fa-quote-left, .fa-quote-right {
+            font-size: 0.7rem;
+            opacity: 0.7;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        function showStatusModal(companyId, action, companyName) {
+            console.log('showStatusModal called with:', { companyId, action, companyName });
+
+            // Set company ID and action
+            $('#companyIdForStatus').val(companyId);
+            $('#statusAction').val(action);
+
+            // Clear password field
+            $('#adminPasswordStatus').val('');
+
+            // Set confirmation text for violation handling
+            const confirmText = `Bạn có chắc chắn muốn tạm khóa công ty "${companyName}" do vi phạm không? Tất cả vị trí tuyển dụng sẽ bị vô hiệu hóa.`;
+            $('#statusConfirmText').text(confirmText);
+
+            // Show modal
+            $('#statusModal').modal('show');
+        }
+
+        function showDeleteModal(companyId, companyName) {
+            console.log('showDeleteModal called with:', { companyId, companyName });
+
+            // Set company ID
+            $('#companyIdForDelete').val(companyId);
+
+            // Clear form fields
+            $('#adminPasswordDelete').val('');
+            $('#deleteReason').val('');
+
+            // Set confirmation text for severe violation
+            const confirmText = `Bạn sắp xóa vĩnh viễn công ty "${companyName}" do vi phạm nghiêm trọng.`;
+            $('#deleteConfirmText').text(confirmText);
+
+            // Show modal
+            $('#deleteModal').modal('show');
+        }
+
+        $(document).ready(function() {
+            // Auto dismiss alerts after 5 seconds
+            setTimeout(function() {
+                $('.alert').fadeOut('slow');
+            }, 5000);
+
+            // Handle status form submission
+            $('#statusForm').on('submit', function(e) {
+                const password = $('#adminPasswordStatus').val().trim();
+                if (!password) {
+                    e.preventDefault();
+                    alert('Vui lòng nhập mật khẩu admin!');
+                    $('#adminPasswordStatus').focus();
+                    return false;
+                }
+            });
+
+            // Handle delete form submission
+            $('#deleteForm').on('submit', function(e) {
+                const password = $('#adminPasswordDelete').val().trim();
+                const reason = $('#deleteReason').val().trim();
+
+                if (!password) {
+                    e.preventDefault();
+                    alert('Vui lòng nhập mật khẩu admin!');
+                    $('#adminPasswordDelete').focus();
+                    return false;
+                }
+
+                if (!reason) {
+                    e.preventDefault();
+                    alert('Vui lòng nhập lý do xóa công ty!');
+                    $('#deleteReason').focus();
+                    return false;
+                }
+
+                if (reason.length < 20) {
+                    e.preventDefault();
+                    alert('Lý do xóa phải chi tiết hơn (ít nhất 20 ký tự)!');
+                    $('#deleteReason').focus();
+                    return false;
+                }
+
+                // Final confirmation for severe action
+                if (!confirm('CẢNH BÁO: Bạn có thực sự chắc chắn muốn XÓA VĨNH VIỄN công ty này không?\n\nHành động này sẽ xóa:\n- Thông tin công ty\n- Tất cả vị trí tuyển dụng\n- Tất cả đơn ứng tuyển\n- Tất cả đánh giá\n\nHành động này KHÔNG THỂ HOÀN TÁC!')) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+
+            // Clear modals when hidden
+            $('#statusModal').on('hidden.bs.modal', function () {
+                $('#adminPasswordStatus').val('');
+                $('#companyIdForStatus').val('');
+                $('#statusAction').val('');
+            });
+
+            $('#deleteModal').on('hidden.bs.modal', function () {
+                $('#adminPasswordDelete').val('');
+                $('#deleteReason').val('');
+                $('#companyIdForDelete').val('');
+            });
+
+            // Focus on password field when modals are shown
+            $('#statusModal').on('shown.bs.modal', function () {
+                $('#adminPasswordStatus').focus();
+            });
+
+            $('#deleteModal').on('shown.bs.modal', function () {
+                $('#deleteReason').focus();
+            });
+
+            // Initialize DataTable for better sorting and filtering
+            if ($.fn.DataTable) {
+                $('#violationTable').DataTable({
+                    "order": [[ 1, "asc" ]], // Sort by severity level
+                    "pageLength": 25,
+                    "language": {
+                        "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Vietnamese.json"
+                    },
+                    "columnDefs": [
+                        { "orderable": false, "targets": [3, 5] } // Disable sorting for content and actions columns
+                    ]
+                });
+            }
+
+            console.log('Violation reports scripts loaded successfully');
+        });
+    </script>
+}

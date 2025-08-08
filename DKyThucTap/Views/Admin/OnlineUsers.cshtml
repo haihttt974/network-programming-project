@@ -1,0 +1,241 @@
+@{
+    ViewData["Title"] = "Quản lý người dùng Online";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">
+                        <i class="fas fa-users me-2"></i>
+                        Người dùng đang Online
+                    </h3>
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <div class="d-flex align-items-center">
+                                <div class="online-indicator me-2">
+                                    <i class="fas fa-circle text-success pulse-dot" style="font-size: 8px;"></i>
+                                    <div id="admin-update-indicator" class="update-pulse"></div>
+                                </div>
+                                <span id="total-online" class="fw-bold">0</span> người online
+                                <small class="text-muted ms-2" id="admin-last-updated">Đang tải...</small>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="refreshData()">
+                            <i class="fas fa-sync-alt me-1"></i>Làm mới
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <!-- Statistics -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h4 class="mb-0" id="stat-total">0</h4>
+                                    <p class="mb-0">Tổng Online</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h4 class="mb-0" id="stat-connections">0</h4>
+                                    <p class="mb-0">Tổng Kết nối</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h4 class="mb-0" id="stat-active">0</h4>
+                                    <p class="mb-0">Hoạt động (5p)</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h4 class="mb-0" id="stat-multi">0</h4>
+                                    <p class="mb-0">Nhiều kết nối</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Online Users Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Người dùng</th>
+                                    <th>Số kết nối</th>
+                                    <th>Hoạt động cuối</th>
+                                    <th>Thông tin Client</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody id="online-users-table">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">
+                                        <i class="fas fa-spinner fa-spin me-2"></i>Đang tải...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let refreshInterval;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadOnlineUsers();
+    
+    // Auto refresh every 30 seconds
+    refreshInterval = setInterval(loadOnlineUsers, 30000);
+});
+
+async function loadOnlineUsers() {
+    try {
+        const response = await fetch('/api/OnlineUsers/list');
+        if (response.ok) {
+            const data = await response.json();
+            renderOnlineUsers(data.users);
+            updateStatistics(data.users);
+
+            // Show update indicator
+            const indicator = document.getElementById('admin-update-indicator');
+            if (indicator) {
+                indicator.classList.add('active');
+                setTimeout(() => {
+                    indicator.classList.remove('active');
+                }, 2000);
+            }
+
+            // Update timestamp
+            const timestampElement = document.getElementById('admin-last-updated');
+            if (timestampElement) {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('vi-VN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                timestampElement.textContent = `(${timeString})`;
+                timestampElement.title = `Lần cập nhật cuối: ${now.toLocaleString('vi-VN')}`;
+            }
+        } else {
+            throw new Error('Failed to load online users');
+        }
+    } catch (error) {
+        console.error('Error loading online users:', error);
+        document.getElementById('online-users-table').innerHTML =
+            '<tr><td colspan="5" class="text-center text-danger">Lỗi khi tải dữ liệu</td></tr>';
+    }
+}
+
+function renderOnlineUsers(users) {
+    const tbody = document.getElementById('online-users-table');
+    
+    if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Không có người dùng nào online</td></tr>';
+        return;
+    }
+
+    const html = users.map(user => {
+        const lastActivity = new Date(user.lastActivity);
+        const now = new Date();
+        const diffMinutes = Math.floor((now - lastActivity) / (1000 * 60));
+        
+        let activityText = '';
+        let statusClass = '';
+        
+        if (diffMinutes < 1) {
+            activityText = 'Vừa xong';
+            statusClass = 'text-success';
+        } else if (diffMinutes < 5) {
+            activityText = `${diffMinutes} phút trước`;
+            statusClass = 'text-success';
+        } else {
+            activityText = `${diffMinutes} phút trước`;
+            statusClass = 'text-warning';
+        }
+
+        return `
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center">
+                        ${user.profilePictureUrl ? 
+                            `<img src="${user.profilePictureUrl}" alt="${user.userName}" class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">` :
+                            `<div class="rounded-circle me-2 bg-secondary d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; color: white;">${user.userName.charAt(0).toUpperCase()}</div>`
+                        }
+                        <div>
+                            <div class="fw-semibold">${user.userName}</div>
+                            <small class="text-muted">ID: ${user.userId}</small>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge ${user.connectionCount > 1 ? 'bg-warning' : 'bg-primary'}">
+                        ${user.connectionCount}
+                    </span>
+                </td>
+                <td>
+                    <span class="${statusClass}">${activityText}</span>
+                    <br>
+                    <small class="text-muted">${lastActivity.toLocaleString('vi-VN')}</small>
+                </td>
+                <td>
+                    <small class="text-muted" title="${user.clientInfo || 'N/A'}">
+                        ${user.clientInfo ? user.clientInfo.substring(0, 50) + '...' : 'N/A'}
+                    </small>
+                </td>
+                <td>
+                    <i class="fas fa-circle ${statusClass}" style="font-size: 8px;"></i>
+                    <span class="small ${statusClass}">
+                        ${diffMinutes < 5 ? 'Hoạt động' : 'Không hoạt động'}
+                    </span>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    tbody.innerHTML = html;
+}
+
+function updateStatistics(users) {
+    const totalUsers = users.length;
+    const totalConnections = users.reduce((sum, user) => sum + user.connectionCount, 0);
+    const activeUsers = users.filter(user => {
+        const diffMinutes = Math.floor((new Date() - new Date(user.lastActivity)) / (1000 * 60));
+        return diffMinutes < 5;
+    }).length;
+    const multiConnectionUsers = users.filter(user => user.connectionCount > 1).length;
+
+    document.getElementById('total-online').textContent = totalUsers;
+    document.getElementById('stat-total').textContent = totalUsers;
+    document.getElementById('stat-connections').textContent = totalConnections;
+    document.getElementById('stat-active').textContent = activeUsers;
+    document.getElementById('stat-multi').textContent = multiConnectionUsers;
+}
+
+function refreshData() {
+    loadOnlineUsers();
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+    }
+});
+</script>
+}

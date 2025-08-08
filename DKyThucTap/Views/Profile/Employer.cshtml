@@ -1,0 +1,143 @@
+﻿@model DKyThucTap.ViewModels.EmployerProfileViewModel
+
+@{
+    ViewData["Title"] = "Thông tin Công ty";
+}
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+
+<div class="container my-5">
+    <div class="card shadow-lg border-0 mx-auto" style="max-width: 850px;">
+        <div class="card-header bg-dark text-white text-center py-3">
+            <h3 class="mb-0">
+                <i class="fas fa-building"></i> Hồ sơ Công ty
+            </h3>
+        </div>
+        <div class="card-body">
+
+            <!-- Logo công ty -->
+            @if (!string.IsNullOrEmpty(Model.LogoUrl))
+            {
+                <div class="text-center mb-4">
+                    <img src="@Model.LogoUrl"
+                         alt="Logo công ty"
+                         class="img-fluid rounded shadow"
+                         style="max-height:130px;" />
+                </div>
+            }
+            else
+            {
+                <div class="text-center mb-4">
+                    <img src="/images/profiles/default-company.png"
+                         alt="Logo công ty mặc định"
+                         class="img-fluid rounded shadow"
+                         style="max-height:130px;" />
+                </div>
+            }
+
+            <!-- Tên công ty -->
+            <h2 class="fw-bold text-primary text-center">@Model.CompanyName</h2>
+            <hr />
+
+            <!-- Thông tin cơ bản -->
+            <div class="px-4">
+                <p>
+                    <i class="fas fa-industry text-secondary"></i>
+                    <strong>Ngành nghề:</strong> @Model.Industry
+                </p>
+                <p>
+                    <i class="fas fa-map-marker-alt text-danger"></i>
+                    <strong>Địa điểm:</strong> @Model.Location
+                </p>
+                <p>
+                    <i class="fas fa-globe text-info"></i>
+                    <strong>Website:</strong>
+                    @if (!string.IsNullOrEmpty(Model.Website))
+                    {
+                        <a href="@Model.Website" target="_blank" class="ms-1 text-decoration-none">
+                            @Model.Website
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="text-muted">Chưa cập nhật</span>
+                    }
+                </p>
+                <p>
+                    <i class="fas fa-info-circle text-primary"></i>
+                    <strong>Mô tả:</strong> @Model.Description
+                </p>
+
+                <!-- Điểm trung bình -->
+                <div class="d-flex align-items-center mb-3">
+                    <i class="fas fa-star text-warning me-2"></i>
+                    <strong>Điểm trung bình:</strong>
+                    <div class="ms-2">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            <i class="fas fa-star @(i <= Math.Round(Model.AverageRating)
+                                                               ? "text-warning" : "text-muted")"></i>
+                                                }
+                        <span class="ms-2">(@Model.AverageRating.ToString("0.0") / 5)</span>
+                    </div>
+                </div>
+            </div>
+
+            <hr />
+
+            <!-- Vị trí đang tuyển -->
+            <h5 class="fw-bold mb-3">
+                <i class="fas fa-briefcase text-success"></i> Vị trí đang tuyển
+                <span class="badge bg-secondary">@Model.ActivePositions.Count</span>
+            </h5>
+            @if (Model.ActivePositions.Any())
+            {
+                <ul class="list-group list-group-flush mb-3">
+                    @foreach (var pos in Model.ActivePositions)
+                    {
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <span>@pos</span>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p class="text-muted">Chưa có vị trí tuyển dụng nào.</p>
+            }
+
+            <!-- Đánh giá từ ứng viên -->
+            <h5 class="fw-bold mb-3">
+                <i class="fas fa-comments text-primary"></i> Đánh giá từ ứng viên
+                <span class="badge bg-info">@Model.Reviews.Count</span>
+            </h5>
+            @if (Model.Reviews.Any())
+            {
+                <div class="list-group">
+                    @foreach (var rev in Model.Reviews)
+                    {
+                        <div class="list-group-item">
+                            <i class="fas fa-quote-left text-muted"></i>
+                            <span class="fst-italic">"@rev"</span>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="text-muted">Chưa có đánh giá nào.</p>
+            }
+
+            <hr />
+
+            <!-- Nút quay lại -->
+            <div class="text-center mt-3">
+                <a href="javascript:history.back()" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Quay lại
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

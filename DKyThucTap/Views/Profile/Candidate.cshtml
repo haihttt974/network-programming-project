@@ -1,0 +1,103 @@
+﻿@model DKyThucTap.ViewModels.CandidateProfileViewModel
+
+@{
+    ViewData["Title"] = "Hồ sơ Ứng viên";
+}
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+
+<div class="container my-5">
+    <div class="card shadow-lg border-0 mx-auto" style="max-width: 800px; border-radius: 20px;">
+        <div class="card-header bg-gradient bg-primary text-white text-center py-4" style="border-radius: 20px 20px 0 0;">
+            <img src="@(string.IsNullOrEmpty(Model.ProfilePictureUrl)
+                                         ? Url.Content("~/images/profiles/default-avatar.png")
+                                         : Model.ProfilePictureUrl)"
+                 alt="Ảnh hồ sơ"
+                 class="rounded-circle shadow-lg border border-3 border-white mb-3"
+                 width="140" height="140" />
+            <h3 class="fw-bold mb-1">@Model.FullName</h3>
+            <span class="badge bg-light text-dark fs-6">
+                <i class="fas fa-user"></i> Ứng viên
+            </span>
+        </div>
+
+        <div class="card-body px-5 py-4">
+
+            <!-- Tiểu sử -->
+            <div class="mb-4 text-center">
+                <p class="fst-italic text-muted fs-5">
+                    @(string.IsNullOrEmpty(Model.Bio) ? "Chưa có mô tả cá nhân" : Model.Bio)
+                </p>
+            </div>
+
+            <hr />
+
+            <!-- Thông tin liên hệ -->
+            <h5 class="fw-bold mb-3"><i class="fas fa-address-card text-primary"></i> Thông tin liên hệ</h5>
+            <ul class="list-group list-group-flush mb-4">
+                <li class="list-group-item">
+                    <i class="fas fa-envelope text-danger"></i>
+                    <strong>Email:</strong> @Model.Email
+                </li>
+                <li class="list-group-item">
+                    <i class="fas fa-phone text-success"></i>
+                    <strong>Số điện thoại:</strong>
+                    @if (!string.IsNullOrEmpty(Model.Phone))
+                    {
+                        <a href="https://zalo.me/@Model.Phone" target="_blank" class="ms-2 text-decoration-none">
+                            @Model.Phone <i class="fab fa-zalo"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="text-muted">Chưa cập nhật</span>
+                    }
+                </li>
+                <li class="list-group-item">
+                    <i class="fas fa-file-alt text-info"></i>
+                    <strong>CV:</strong>
+                    @if (!string.IsNullOrEmpty(Model.CvUrl))
+                    {
+                        <a href="@Model.CvUrl" target="_blank" class="btn btn-sm btn-outline-primary ms-2">
+                            <i class="fas fa-eye"></i> Xem CV
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="text-muted">Chưa cập nhật</span>
+                    }
+                </li>
+            </ul>
+
+            <hr />
+
+            <!-- Danh sách kỹ năng -->
+            <h5 class="fw-bold mb-3"><i class="fas fa-lightbulb text-warning"></i> Kỹ năng</h5>
+            @if (Model.Skills.Any())
+            {
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    @foreach (var skill in Model.Skills)
+                    {
+                        <span class="badge bg-gradient bg-success text-white px-3 py-2 fs-6 shadow-sm">
+                            <i class="fas fa-check-circle"></i> @skill
+                        </span>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="text-muted">Chưa cập nhật kỹ năng</p>
+            }
+
+            <hr />
+
+            <!-- Nút quay lại -->
+            <div class="text-center mt-4">
+                <a href="javascript:history.back()" class="btn btn-lg btn-outline-secondary px-4">
+                    <i class="fas fa-arrow-left"></i> Quay lại
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

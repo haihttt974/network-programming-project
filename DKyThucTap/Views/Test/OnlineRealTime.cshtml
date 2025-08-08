@@ -1,0 +1,270 @@
+@{
+    ViewData["Title"] = "Test Real-time Online Users";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Test Real-time Online Users System</h3>
+                    <p class="text-muted mb-0">This page tests the real-time online user count updates in the footer</p>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Test Controls</h5>
+                            
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-success" onclick="createMultipleConnections()">
+                                    <i class="fas fa-plus me-1"></i>Create 5 Test Connections
+                                </button>
+                                <small class="form-text text-muted">Add multiple test users to see count increase</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-warning" onclick="forceRefreshCount()">
+                                    <i class="fas fa-sync-alt me-1"></i>Force Refresh Count
+                                </button>
+                                <small class="form-text text-muted">Manually trigger count update</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-info" onclick="showManagerStatus()">
+                                    <i class="fas fa-info-circle me-1"></i>Show Manager Status
+                                </button>
+                                <small class="form-text text-muted">Display OnlineUserManager status</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-danger" onclick="clearAllTestData()">
+                                    <i class="fas fa-trash me-1"></i>Clear All Test Data
+                                </button>
+                                <small class="form-text text-muted">Remove all test connections</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="autoCreateConnections">
+                                    <label class="form-check-label" for="autoCreateConnections">
+                                        Auto-create connections every 10 seconds
+                                    </label>
+                                </div>
+                                <small class="form-text text-muted">Automatically add/remove connections to test real-time updates</small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h5>Current Status</h5>
+                            
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="card bg-primary text-white">
+                                        <div class="card-body text-center">
+                                            <h4 class="mb-0" id="current-footer-count">?</h4>
+                                            <p class="mb-0">Footer Count</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="card bg-info text-white">
+                                        <div class="card-body text-center">
+                                            <h4 class="mb-0" id="api-count">?</h4>
+                                            <p class="mb-0">API Count</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <h6>Manager Status</h6>
+                                <div id="manager-status" class="bg-light p-3 rounded">
+                                    <small class="text-muted">Click "Show Manager Status" to display</small>
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <h6>Update Log</h6>
+                                <div id="update-log" class="bg-light p-3 rounded" style="height: 200px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+                                    <p class="text-muted mb-0">Updates will appear here...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-info-circle me-2"></i>How to Test:</h6>
+                                <ol class="mb-0">
+                                    <li>Look at the footer at the bottom of this page - it should show "X người đang online"</li>
+                                    <li>Click "Create 5 Test Connections" and watch the footer count increase automatically</li>
+                                    <li>The count should update within 30 seconds without any user interaction</li>
+                                    <li>Click on the users dropdown in the footer to see the detailed list</li>
+                                    <li>Enable "Auto-create connections" to see continuous real-time updates</li>
+                                    <li>Open this page in multiple tabs/browsers to see multiple connections</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let autoCreateInterval = null;
+let statusUpdateInterval = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Start monitoring status
+    startStatusMonitoring();
+    
+    // Setup auto-create checkbox
+    document.getElementById('autoCreateConnections').addEventListener('change', function() {
+        if (this.checked) {
+            startAutoCreate();
+        } else {
+            stopAutoCreate();
+        }
+    });
+});
+
+function logUpdate(message) {
+    const log = document.getElementById('update-log');
+    const timestamp = new Date().toLocaleTimeString();
+    const entry = document.createElement('div');
+    entry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+    log.appendChild(entry);
+    log.scrollTop = log.scrollHeight;
+}
+
+function startStatusMonitoring() {
+    updateCurrentStatus();
+    statusUpdateInterval = setInterval(updateCurrentStatus, 5000); // Update every 5 seconds
+}
+
+async function updateCurrentStatus() {
+    // Get footer count
+    const footerCount = document.getElementById('online-number')?.textContent || '?';
+    document.getElementById('current-footer-count').textContent = footerCount;
+    
+    // Get API count
+    try {
+        const response = await fetch('/api/OnlineUsers/count');
+        if (response.ok) {
+            const data = await response.json();
+            document.getElementById('api-count').textContent = data.count;
+            
+            // Check if counts match
+            if (parseInt(footerCount) !== data.count) {
+                logUpdate(`Count mismatch: Footer=${footerCount}, API=${data.count}`);
+            }
+        }
+    } catch (error) {
+        document.getElementById('api-count').textContent = 'Error';
+    }
+}
+
+async function createMultipleConnections() {
+    logUpdate('Creating 5 test connections...');
+    
+    try {
+        const response = await fetch('/Test/Online/CreateTestData');
+        const data = await response.json();
+        
+        if (data.success) {
+            logUpdate(`✓ Created test connections. Online count should be: ${data.onlineCount}`);
+        } else {
+            logUpdate(`✗ Failed to create connections: ${data.error}`);
+        }
+    } catch (error) {
+        logUpdate(`✗ Error creating connections: ${error.message}`);
+    }
+}
+
+function forceRefreshCount() {
+    logUpdate('Force refreshing count...');
+    
+    if (window.onlineUserManager && typeof window.onlineUserManager.forceRefresh === 'function') {
+        window.onlineUserManager.forceRefresh();
+        logUpdate('✓ Force refresh triggered');
+    } else {
+        logUpdate('✗ OnlineUserManager not available');
+    }
+}
+
+function showManagerStatus() {
+    if (window.onlineUserManager && typeof window.onlineUserManager.getStatus === 'function') {
+        const status = window.onlineUserManager.getStatus();
+        document.getElementById('manager-status').innerHTML = `
+            <strong>OnlineUserManager Status:</strong><br>
+            <small>
+                • Authenticated: ${status.isAuthenticated}<br>
+                • Connection ID: ${status.connectionId || 'None'}<br>
+                • Has Heartbeat: ${status.hasHeartbeat}<br>
+                • Has Update Interval: ${status.hasUpdateInterval}<br>
+                • Current Count: ${status.currentCount}
+            </small>
+        `;
+        logUpdate('✓ Manager status updated');
+    } else {
+        document.getElementById('manager-status').innerHTML = '<span class="text-danger">OnlineUserManager not available</span>';
+        logUpdate('✗ OnlineUserManager not available');
+    }
+}
+
+async function clearAllTestData() {
+    logUpdate('Clearing all test data...');
+    
+    try {
+        const response = await fetch('/Test/Online/ClearTestData');
+        const data = await response.json();
+        
+        if (data.success) {
+            logUpdate(`✓ ${data.message}`);
+        } else {
+            logUpdate(`✗ Failed to clear data: ${data.error}`);
+        }
+    } catch (error) {
+        logUpdate(`✗ Error clearing data: ${error.message}`);
+    }
+}
+
+function startAutoCreate() {
+    logUpdate('Starting auto-create mode...');
+    let counter = 0;
+    
+    autoCreateInterval = setInterval(async () => {
+        counter++;
+        if (counter % 2 === 1) {
+            // Create connections
+            await createMultipleConnections();
+        } else {
+            // Clear connections
+            await clearAllTestData();
+        }
+    }, 10000); // Every 10 seconds
+}
+
+function stopAutoCreate() {
+    if (autoCreateInterval) {
+        clearInterval(autoCreateInterval);
+        autoCreateInterval = null;
+        logUpdate('Stopped auto-create mode');
+    }
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (autoCreateInterval) {
+        clearInterval(autoCreateInterval);
+    }
+    if (statusUpdateInterval) {
+        clearInterval(statusUpdateInterval);
+    }
+});
+</script>
+}
