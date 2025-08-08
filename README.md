@@ -91,7 +91,7 @@ DKyThucTap/\
 ## 🔒 License
 Distributed under the MIT License. See `LICENSE` for details.
 
-## The Dev Team
+## 👥 The Dev Team
 <div align="center">
 	<table>
 		<tr>
